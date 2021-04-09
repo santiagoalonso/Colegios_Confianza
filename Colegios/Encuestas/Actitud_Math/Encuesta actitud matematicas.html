@@ -1,0 +1,372 @@
+<html>
+<head>
+<title> Prueba 1</title>
+<link rel="stylesheet" href="estilo.css">
+<script src="myscript.js"></script>
+</head>
+<body>
+<div id="wrapper">
+  <h1>Cuestionario Fennema </h1>
+  <p>Pontificia Universidad Javeriana</p>
+  
+  <form action="ejemplo.php" method="get">
+  <p>Nombres y Apellidos: <input type="text"  name="nombre" size="40"></p>
+  <p>Curso: 
+    <input type="radio" name="curso" value= "c"> cuarto
+    <input type="radio" name="curso" value= "s"> sexto
+  </p>
+  <p>Edad: <input type="number" name="nacido" min="0"></p>
+  <p>Sexo:
+    <input type="radio" name="hm" value="h"> Hombre
+    <input type="radio" name="hm" value="m"> Mujer
+  </p>
+    <p> En las siguientes preguntas indiqué la respuesta que considere. No hay respuesta correcta o incorrecta, conteste lo que sienta más cercano a usted  
+ </p>
+ <hr/>
+ </form>
+ 
+
+ 
+  <form id="quiz">
+    <!-- Question 1 -->
+    <h3>1.	Confio más en las respuestas de niños que de las niñas a un problema matematico </h3>
+    <!-- Here are the choices for the first question. Each input tag must have the same name. For this question, the name is q1. -->
+    <!-- The value is which answer the choice corresponds to. -->
+    <label><input type="radio" name="q1" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q1" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q1" value="c3">
+      De acuerdo
+    </label><br />
+    <label><input type="radio" name="q1" value="c4">
+      Totalmente de acuerdo
+    </label><br />
+
+    <!-- Question 2 -->
+    <h3>2.	Si obtengo la mejor nota en matematicas prefiero que nadie sepa</h3>
+    <!-- Here are the choices for the second question. Notice how each input tag has the same name (q2), but a different name than the previous question. -->
+    <label><input type="radio" name="q2" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q2" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q2" value="c3">
+      De acuerdo
+    </label><br />
+    <label><input type="radio" name="q2" value="c4">
+      Totalmente de acuerdo
+    </label><br />
+    
+    <!-- Question 3 -->
+    <h3>3.	Con tal que pase mi mama no le importa como me va en matematicas</h3>
+    <!-- Choices for the third question -->
+    <label><input type="radio" name="q3" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q3" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q3" value="c3">
+      De acuerdo
+    </label><br />
+    <label><input type="radio" name="q3" value="c4">
+      Totalmente de acuerdo
+    </label><br />
+    
+    <!-- Question 4 -->
+    <h3>4.	Las matematicas no tienen importancia fuera de la clase </h3>
+    <!-- Choices for the fourth question -->
+    <label><input type="radio" name="q4" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q4" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q4" value="c3">
+      De acuerdo
+    </label><br />
+    <label><input type="radio" name="q4" value="c4">
+      Totalmente de acuerdo
+    </label><br />
+    <!-- question 5 -->
+    <h3>5.	Cuando me enfrento a un problema matematico no paro hasta resolverlo</h3>
+    <!-- Choices for the fifth question-->
+    <label><input type="radio" name="q5" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q5" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q5"
+value="c3">
+        De acuerdo
+    </label><br />
+    <label><input type="radio" name="q5"
+value="c4">
+          Totalmente de acuerdo
+          </label><br />
+    <!-- question sixth-->
+    <h3>6.	Lograr que los profesores de matematicas me pongan atencion es dificil</h3>
+    <!--choices question sixth-->
+    <label><input type="radio" name="q6" value="c1">
+          Totalmente en desacuerdo
+      </label><br />
+      <label><input type="radio"name="q6" value="c2">
+        En desacuerdo
+        </label><br />
+        <label><input type="radio" name="q6" value="c3">
+          De acuerdo
+          </label><br />
+          <label><input type="radio" name="q6" value="c4">
+            Totalmente de acuerdo
+            </label><br />
+    <!-- question seventh-->
+    <h3>7.	Las matematicas son muy utiles </h3>
+    <!--choices question seventh-->
+    <label><input type="radio" name="q7" value="c1">
+      Totalmente en desacuerdo
+      </label><br />
+    <label><input type="radio" name="q7" value="c2">
+      En desacuerdo
+      </label><br />
+    <label><input type="radio" name="q7" value="c3">
+      De acuerdo
+      </label><br />
+    <label><input type="radio" name="q7" value="c4">
+      Totalmente de acuerdo
+      </label><br />
+    <!--question eighth-->
+    <h3>8.	Las matematicas me ponen nervioso</h3>
+    <!--choices question eighth-->
+    <label><input type="radio" name="q8" value="c1">
+      Totalmente en desacuerdo
+      </label><br />
+    <label><input type="radio" name="q8" value="c2">
+      En desacuerdo
+      </label><br />
+    <label><input type="radio" name="q8" value="c3">
+      De acuerdo
+      </label><br />
+    <label><input type="radio" name="q8" value="c4">
+      Totalmente de acuerdo
+      </label><br />
+    <!--question ninth-->
+    <h3>9.	Estoy seguro que puedo aprender matematicas</h3>
+    <!--choices question ninth-->
+    <label><input type="radio" name="q9" values="c1">
+      Totalmente en desacuerdo
+      </label><br />
+    <label><input type="radio" name="q9" value="c2">
+      En desacuerdo
+      </label><br />
+    <label><input type="radio" name="q9" value="c3">
+      De acuerdo
+      </label><br />
+    <label><input type="radio" name="q9" value="c4">
+      Totalmente deacuerdo
+      </label><br />
+    <!--question tenth-->
+    <h3>10.	Me gustaría tener las mejores notas en matematicas</h3>
+    <!--choices question tenth-->
+    <label><input type="radio" name="q10" value="c1">
+      Totalmente en desacuerdo
+      </label><br />
+    <label><input type="radio" name="q10" value="c2">
+      En desacuerdo
+      </label><br />
+    <label><input type="radio" name="q10" value="c3">
+      De acuerdo
+      </label><br />
+    <label><input type="radio" name="q10" value="c4">
+      Totalmente de acuerdo
+      </label><br />
+    <!--question eleventh-->
+    <h3>11.	Mi papa piensa que puedo ser bueno en matematicas</h3>
+    <!--choices question eleventh-->
+    <label><input type="radio" name="q11" value="c1">
+      Totalmente en desacuerdo
+      </label><br />
+    <label><input type="radio" name="q11" value="c2">
+      En desacuerdo
+      </label><br />
+    <label><input type="radio" name="q11" value="c3">
+      De acuerdo
+      </label><br />
+    <label><input type="radio" name="q11" value="c4">
+      Totalmente de acuerdo
+      </label><br />
+    <!--question twelfth-->
+    <h3>12.	No entiendo como alguien puede disfrutar resolver problemas matematicos</h3>
+    <!--choices question  twelfth-->
+    <label><input type="radio" name="q12" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q12" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q12" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q12" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+     <!--question 13-->
+    <h3>13.	No soy bueno en matematicas</h3>
+    <!--choices question  13-->
+    <label><input type="radio" name="q13" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q13" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q13" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q13" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+     <!--question 14-->
+    <h3>14.	A mis profesores de matematicas les interesa mi progreso en la materia</h3>
+    <!--choices question 14-->
+    <label><input type="radio" name="q14" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q14" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q14" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q14" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+      <!--question 15-->
+    <h3>15.	Con tal que pase mi papa no le importa como me va en matematicas</h3>
+    <!--choices question  15-->
+    <label><input type="radio" name="q15" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q15" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q15" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q15" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+      <!--question 16-->
+    <h3>16.	A las ninas les va igual de bien que a los ninos en matematicas</h3>
+    <!--choices question  16-->
+    <label><input type="radio" name="q16" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q16" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q16" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q16" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+      <!--question 17-->
+    <h3>17.	Mi mama piensa que puedo ser bueno en matematicas</h3>
+    <!--choices question  17-->
+    <label><input type="radio" name="q17" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q17" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q17" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q17" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+      <!--question 18-->
+    <h3>18.	Usualmente me va bien en matematicas</h3>
+    <!--choices question  18-->
+    <label><input type="radio" name="q18" value="c1">
+      Totalmente en desacuerdo
+    </label><br />
+    <label><input type="radio" name="q18" value="c2">
+      En desacuerdo
+    </label><br />
+    <label><input type="radio" name="q18" value="c3">
+     De acuerdo
+    </label><br />
+     <label><input type="radio" name="q18" value="c4">
+     Totalmente de acuerdo
+    </label><br />
+    
+     
+  <button type="button" id= "button"onclick="tabulateAnswers()">terminar</button>
+  </form>
+  
+</div>
+</body>
+<script>
+
+function tabulateAnswers() {
+  var data = {
+   		Nombre: [],
+        Curso: [], 
+   		Edad: [],
+   		Genero: [], //0 hombre, 1 mujer
+   		Resp: []
+   }
+  
+  var nquestion = 18;  	
+  for (var i=1; i<=nquestion; i++){
+        var choices = document.getElementsByName("q" + i);
+	 for (j=0; j<choices.length; j++){
+		if (choices[j].checked) {
+			data.Resp.push(j)
+		} 
+	}		
+  }
+
+  data.Nombre = document.getElementsByName("nombre")[0].value
+  data.Edad = document.getElementsByName("nacido")[0].value
+  var choices = document.getElementsByName("hm");
+  for (j=0; j<choices.length; j++){
+	if (choices[j].checked) {
+		data.Genero=j
+	}
+   }
+   var choices= document.getElementsByName("curso");
+   for (j=0; j<choices.length; j++){
+         if (choices [j].checked) {
+			 if(j==0){
+			 	data.Curso=4
+			 } else {
+			 	data.Curso=6
+			 }         
+        }
+   }
+   saveText(JSON.stringify(data), data.Nombre + "_actMat.json")
+   if (data.Resp.length < nquestion){
+   		alert("NO HAS TERMINADO. Te faltan preguntas")
+   } else {
+   		alert("Terminaste, llama al instructor")
+   }
+   
+
+}
+
+//To save text
+function saveText(text,filename){
+	var a = document.createElement("a")
+	a.setAttribute("href", "data:text/plain;charset=utf-u, "+encodeURIComponent(text))
+	a.setAttribute("download", filename)
+	document.body.appendChild(a)
+	a.click()
+}
+</script>
+</html>

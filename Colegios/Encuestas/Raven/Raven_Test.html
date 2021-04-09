@@ -1,0 +1,266 @@
+<html>
+<head>
+<title> Raven </title>
+<link rel="stylesheet" href="estilo.css">
+<!--  <script src="myscript.js"></script> -->
+</head>
+<body>
+	
+<img src="A1.jpg" id="ph" alt="HTML5 Icon" width="0" height="0"></img> <!-- place holder for images to be shown -->
+	
+<div id="wrapper">
+  <h1 id = 'RT'>Raven Test </h1>
+  <p id = 'PUJ'>Pontificia Universidad Javeriana</p>
+  
+<form id = 'dem' action="ejemplo1.php" method="get">
+  <p>Nombre: <input type="text"  name="nombre" size="40"></p>
+  <p>Curso: 
+    <input type="radio" name="curso" value= "4"> 4°
+    <input type="radio" name="curso" value= "6"> 6°
+  </p>
+  <p>Edad: <input type="number" name="nacido" min="0"></p>
+  <p>Sexo:
+    <input type="radio" name="hm" value="h"> Hombre
+    <input type="radio" name="hm" value="m"> Mujer
+  </p>
+    <p> En las siguientes preguntas seleccione la respuesta correcta.
+ </p>
+ <hr/>
+ </form>
+ </div> 
+
+ 
+ <div id="wrapper1">
+ <form id = 'form' method="get"> 
+    <!-- <p id = 'op'> 
+      <input type="radio" name="opciones" value= "1"> 1
+      <input type="radio" name="opciones" value= "2"> 2
+	  <input type="radio" name="opciones" value= "3"> 3
+	  <input type="radio" name="opciones" value= "4"> 4
+	  <input type="radio" name="opciones" value= "5"> 5
+	  <input type="radio" name="opciones" value= "6"> 6 
+    </p>-->
+  </form>
+ </div>  
+  <button type="button" id= "button" onclick="myPictChange();">Empezar</button>
+  
+   
+
+</body>
+<script>
+ var data = {
+ 	Nombre: [],
+    Curso: [], 
+ 	Edad: [],
+ 	Genero: [], //0 hombre, 1 mujer
+ 	Resp: [],
+	img_shown: [],
+	img_names: ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'A12', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9', 'E10', 'E11', 'E12'],
+	//img_used_bilker: [10, 23, 27, 35, 42, 47, 48, 52, 54], //indices in img_names //Table 2 (9 items) of Bilker et al, Development of Abbreviated Nine-Item Forms of the Raven’s Standard Progressive Matrices Test
+	 img_used_bilker_plus: [0, 5, 10, 14, 21, 23, 24, 27, 35, 36, 42, 47, 48, 52, 54], //our version including some additional trials
+	//img_used_wytek:  [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,18,19,21,22,24,34,35,36,41,46,53,54,57,58,59], //Table 1 of Wytek et al, Development of a new shortened version of raven's matrices test for application and rough assessment of present intelectual capacity within Psychopathological Investigation
+	  
+ }
+ 
+
+ 
+ var idx = 0
+ var eight = 0
+ var scaaling = 0.7	//determines how much the original image is reduced/increased
+ function myPictChange() {
+	 
+	 if (idx == 0){
+		var checkG = 0
+    	var choices = document.getElementsByName("hm");
+    	for (j=0; j<choices.length; j++){
+    	 	if (choices[j].checked) {
+    				checkG = 1
+    			}
+    	 	}
+		
+		 var checkC = 0
+    	 var choices= document.getElementsByName("curso");
+    	 for (j=0; j<choices.length; j++){
+          if (choices[j].checked) {
+ 			  checkC = 1
+         	}
+    	  }
+		 
+		 if (document.getElementsByName("nombre")[0].value == '' || document.getElementsByName("nacido")[0].value == '' || checkG == 0 || checkC == 0){
+		 	alert("Llena tus datos y da click en empezar de nuevo")
+		 } 	else {
+	 	   	data.Nombre = document.getElementsByName("nombre")[0].value
+	 	   	data.Edad = document.getElementsByName("nacido")[0].value
+	    	var choices = document.getElementsByName("hm");
+	    	for (j=0; j<choices.length; j++){
+	    	 	if (choices[j].checked) {
+	    				data.Genero=j
+	    			}
+	    	 	}
+	    	 var choices= document.getElementsByName("curso");
+	    	 for (j=0; j<choices.length; j++){
+	          if (choices[j].checked) {
+	 			 if(j==0){
+	 			 	data.Curso=4
+	 			 } else {
+	 			 	data.Curso=6
+	 			 }
+	         	}
+	    	  }
+		
+	 		 removeElement('wrapper')
+	 		 var rect = document.querySelector("body").getBoundingClientRect();			 
+	 		 for (var i=0; i<6; i++){//generates the radio options
+	 			 var labelB = document.createElement("label");
+	 			 labelB.setAttribute("id",'lab' + (i+1));
+	 			 labelB.setAttribute("style", "font-size: 25px; position:absolute; top: " + (0.6*rect.height + 30*(i+1)) + "px; left: " + (0.5*rect.width) + "px");
+	 			 //document.getElementById("op").appendChild(labelB);
+				 document.getElementById("form").appendChild(labelB);
+	 			 document.getElementById("lab" + (i+1)).innerHTML = i+1;
+			 
+	 			 var radioB = document.createElement("input");
+	 			 radioB.setAttribute("type","radio");
+	 			 radioB.setAttribute("name","opciones");
+	 			 radioB.setAttribute("font-size", 40);
+	 			 radioB.setAttribute("value", i+1);
+	 			 radioB.setAttribute("id",'op' + (i+1));			 
+	 			 document.getElementById('lab' + (i+1)).appendChild(radioB);	
+			 
+			 
+	 			 //var linebreak = document.createElement("br");
+				 //linebreak.setAttribute("id",'br' + (i+1))
+	 			 //document.getElementById("op").appendChild(linebreak);	 
+	 		 } 
+	 		//var idx2 = data.img_used_bilker[0]
+			var idx2 = data.img_used_bilker_plus[0]
+	 		//var idx2 = data.img_used_wytek[0]
+			data.img_shown.push(data.img_names[idx2])
+	 		document.getElementById("ph").src = data.img_names[idx2] + '.jpg';	  		
+	  		
+	  		var heeight = document.getElementById("ph").naturalHeight;
+	  		var wiidth = document.getElementById("ph").naturalWidth;
+	  		document.getElementById("ph").height = scaaling*heeight;
+	  		document.getElementById("ph").width = scaaling*wiidth;		
+	 		document.getElementById("ph").style.position = 'absolute'
+	 		var temp = 0.5*rect.width - 0.5*scaaling*wiidth
+	 		document.getElementById("ph").style.left = temp.toString()
+	 		document.getElementById("button").innerHTML = 'Siguiente'
+	 		document.getElementById("button").style.position = 'absolute'
+	 		document.getElementById("button").style.left =  0.65*rect.width
+	 		document.getElementById("button").style.top =  0.8*rect.height
+
+	 		 idx = idx + 1
+		 } 
+		
+	   	
+	 } else if (idx<999) {
+		 var check = 0
+		 //var idx2 = data.img_used_bilker[idx]
+		 var idx2 = data.img_used_bilker_plus[idx]
+		 data.img_shown.push(data.img_names[idx2])
+		 //var idx2 = data.img_used_wytek[idx]
+		 var rect = document.querySelector("body").getBoundingClientRect();	
+	 
+		 var choices = document.getElementsByName('opciones');
+		 for (j=0; j<choices.length; j++){
+			if (choices[j].checked) {
+				data.Resp.push(j)
+				check = 1
+			} 
+		 }
+	 	 
+		
+		 if (check == 1 && idx<999) {
+			 
+ 	 		document.getElementById("ph").src = data.img_names[idx2] + '.jpg';	  		 	  		
+ 	  		var heeight = document.getElementById("ph").naturalHeight;
+ 	  		var wiidth = document.getElementById("ph").naturalWidth;
+ 	  		document.getElementById("ph").height = scaaling*heeight;
+ 	  		document.getElementById("ph").width = scaaling*wiidth;		
+ 	 		document.getElementById("ph").style.position = 'absolute'
+ 	 		var temp = 0.5*rect.width - 0.5*scaaling*wiidth
+ 	 		document.getElementById("ph").style.left = temp.toString() 
+			 
+			 idx = idx + 1
+		 
+			 //if (idx > data.img_used_bilker.length){
+			 if (idx > data.img_used_bilker_plus.length){
+				 idx = 999 
+			 	 saveText(JSON.stringify(data), data.Nombre + "_Raven.json")
+				 alert("TERMINASTE, llama al instructor")
+			 } 
+		 
+		 } else {
+		 	alert("No respondiste")
+		 }
+		 
+		 if (idx2 < 24 ){
+	 		 resetRadio(6)
+		 } else {
+			 //eight = 1
+	 		 resetRadio(8)
+		 }
+	 }
+	 
+	 
+ 	function removeElement(elementId) {
+ 	    // Removes an element from the document
+ 	    var element = document.getElementById(elementId);
+ 	    element.parentNode.removeChild(element);
+ 	}
+	
+	function saveText(text, filename){
+	  var a = document.createElement('a');
+	  a.setAttribute('href', 'data:text/plain;charset=utf-u,'+encodeURIComponent(text));
+	  a.setAttribute('download', filename);
+	  a.click()
+	}
+	 
+	function resetRadio(num){
+		removeElement("wrapper1")
+		var wrapper1 = document.createElement("div");
+		wrapper1.setAttribute("id",'wrapper1');
+		document.querySelector("body").appendChild(wrapper1)
+		var form = document.createElement("form");
+		form.setAttribute("id",'form');
+		form.setAttribute("method",'get');
+		document.getElementById("wrapper1").appendChild(form)
+		
+		 var rect = document.querySelector("body").getBoundingClientRect();	
+		 //var choices = document.getElementsByName('opciones');
+		 //for (var i=0; i<choices.length; i++){//removes previous options
+		 //	choices[i].checked = 'false'
+			//removeElement("lab" + (i+1))
+			//removeElement("br" + (i+1))
+			//removeElement("op" + (i+1))
+		//}
+				 
+		 for (var i=0; i<num; i++){//generates the radio options
+		 
+		 	 var labelB = document.createElement("label");
+			 labelB.setAttribute("id",'lab' + (i+1));
+			 labelB.setAttribute("style", "font-size: 25px; position:absolute; top: " + (0.6*rect.height + 30*(i+1)) + "px; left: " + (0.5*rect.width) + "px");
+			 document.getElementById("form").appendChild(labelB);			 
+			 document.getElementById("lab" + (i+1)).innerHTML = i+1;
+	 
+			 var radioB = document.createElement("input");
+			 radioB.setAttribute("type","radio");
+			 radioB.setAttribute("name","opciones");
+			 radioB.setAttribute("font-size", 40);
+			 radioB.setAttribute("value", i+1);
+			 radioB.setAttribute("id",'op' + (i+1));			 
+			 document.getElementById('lab' + (i+1)).appendChild(radioB);	
+	 
+	 
+			 //var linebreak = document.createElement("br");
+			 //linebreak.setAttribute("id",'br' + (i+1))
+			 //document.getElementById("op").appendChild(linebreak);	 
+		 } 
+	}
+	  
+ }
+ 
+  </script>
+	
+</html>
+ 

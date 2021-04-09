@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Reading Span</title>
+  </head>
+  <style>
+  	body{height:100%; width:100%}
+	html{height:100%; width:100%}
+	.button1 {font-size: 5px;}
+  </style>
+  <body> 
+	  <button  id = 'sid' style = "z-index: 1" onclick="mySubjID();" class="button button1">SID</button> <!-- ask subj. id -->
+	  <p id = 'Xc'> X </p>
+	  <p id = 'Yc'> Y </p>
+	  
+  </body>
+  
+  <script>
+	 //THIS IS BASED ON MEMORY SPAN TASKS e.g. see article "The development of a short domain-general measure of working memory capacity"
+	  //For example: Participants were presented with a set of arithmetic operations and asked to judge whether each equation was true or false (approximately half were true). After 		each arithmetic operation, participants were presented with an element (a letter) for recall at the end of the set. Set sizes ranged from 3–7, with three administrations for each 		set size (i.e., 75 total operation-storage pairs).
+	
+	
+	 //<button  id = 'O' style = "z-index: 1" onclick="openFullscreen();" class="button button1">O</button> opens full screen -->
+	 //  <button  id = 'C' style = "z-index: 1" onclick="closeFullscreen();" class="button button1">C</button> closes full screen -->
+	 // <input type="file" id="fileItem" webkitdirectory mozdirectory /> // access to full folder
+	  //mysubjID + myTouch3 + mySubjCheck + document.addEventListener("webkitfullscreenchange"
+	  
+	  //file:///storage/emulated/0/NumExp/*.html EXAMPLE OF PATH FOR ANDROID 
+	  
+	  // I used sentences found in the article  "A Working Memory Test Battery: Java-Based Collection of Seven Working Memory Tasks"
+	  
+  	////////////// VARIABLES /////////////// 	
+	var text_re = "" 
+	var timePH = Date.now()
+	var keywaspress = 0;
+	var trialStarted = 10;
+	var fixOn = 0;
+  	var stimOn = 0;
+	var stimOn2 = 1;
+  	var leftSR = 0; //index left start region
+  	var xM = 0; //mouse x coordinate
+  	var yM = 0; //mouse y coordinate
+  	var trial = 0; //operations seen
+	var trial_setsize = 0; //set size completed
+	var rest = 0; // rest screen is off (0), or moved from on to off (1)
+	var rest_temp = 0; // to avoid repainting the rest font
+	var feedback = 2500; // duration of feedback or element to recall in ms
+  	var DATA = [];
+  	var test = { //Test trials variables
+  		fix_dur: [250, 1500], //[max, min] of fix duration (ms)	
+		timestim: 4000, //time the operation is on screen (ms)	
+		timere: 1500, //time the recall element is on screen (ms)
+		timepe: 800, //penalty time for a mistake (ms)
+		fbtime: 1000, //time that x out of set size message appears (ms)
+  		targets_dim: [100,100], //[height, width] pixels
+  		targets_relative_Hcoord: [.3, .7], //Horz. coord. [leftcoordT1, leftcoordT2 ] in % of the body-tag width;
+		targets_relative_Vcoord: [.7, .7], //Vert. coord. [leftcoordT1, leftcoordT2 ] in % of the body-tag height; 	 	
+  		start_dim: [100,100],  //[height, width] 
+  		size_start: [300,300], //[height, width] ... size where finger/mouse should start  
+  		size_fix: 60, //px
+  		samplingrate: 20, //sampling rate (in ms) e.g. 20 is one sample every 20 ms		
+		set_size_available: [2,3], // ['2','3','4','5','6'], //setsize
+		rep_conds: 1, //Number of times set size are repeated e.g. if 0 only once every condition; e.g. if 2, then exp_conditions will be looped 3 times (1 original and 2 additional repetitions)
+		nTrials: 0, //Number of recalls (updated below)
+		nTrials_total: 0, //Number of times the subject sees an operation (updated below)
+		trials_to_rest: 500, //Number of trials before resting screen
+		Trials_order: [], //index to randomize exp_cond_rep i.e. vector with images shown
+		cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 					
+		correct_side: [], //IMPORTANT: (0 left, 1 right)
+		img_shown: [], //IMPORTANT: filename i.e. image presented
+		
+		fontsize_read: 40, //font size of sentences to read in px
+		fontsize_re: 80, //font size of element to recall
+		fontsize_in: 25, //font size of misc instruction
+		
+		sense: ["Los circulos son redondos", 'A los gatos les gusta seguir ratones', 'Las hojas caen de los arboles', 'Los guantes se ponen en las manos', 'A los pajaros les gustan los gusanos', 'Puedes ver estrellas en la noche', 'Los lapices sirven para escribir', 'El azucar es dulce', 'Las girafas tienen cuellos largos', 'Puedes ver programas en la televisión', 'Los conejos saltan', 'Las vacas producen leche', 'Hay niños que llegan en bus al colegio', 'La gente se sienta en sillas', "Los marranos son sucios", "Un cuadrado tiene cuatro lados", "Los camellos tienen jorobas", "Un sombrero se pone en la cabeza", "La gente monta a caballo","Hay edificios muy altos","Las plantas crecen de semillas", "Las gallinas ponen huevos", "Hay micos con cola", "Tu comes en mesas", "Los perros tiene cuatro patas", "En verano algunos pajaros migran", "Muchas cometas tienen forma de diamante", "Las cortinas cubren ventanas", "Las palomas son pajaros", "Hay que abrocharse el cinturon en los carros", "Guardas tu ropa en un closet","Se hierve el agua en ollas", "Los bananos son amarillos","Las medias se ponen en los pies", "Tus dientes están en tu boca", "Los carros tienen cuatro ruedas", "Los magos hacen magia", "Cinco es mayor a cuatro", "Puedo oler con mi nariz", "Puedo ver con mis ojos", "El opuesto de largo es corto","Hay casas de ladrillos", "Los reyes tienen corona", "Oyes con tus oidos", "El número después de dos es tres", "Once es mayor a diez", "Las piedras son duras", "Carlos es un nombre de niño", "Los cachorros juegan", "Juan y Carolina suben la montaña", "Las tortas de cumpleaños tienen velas", "Las plumas son muy livianas", "Muchos colegios tienen parques", "Las flores tienen petalos", "El cafe se prepara en cafeteras", "El peluquero corta pelo", "Si llueve puedes usar una sombrilla", "Los cohetes van al espacio", "Si tienes sed tomas una bebida","Si tienes hambre comes un pan"], //sentences that make sense
+		
+		nonsense: ['Los zorros manejan camiones', 'Las ranas viven en cafeteras', "Un triangulo tienen cuatro lados", "Las serpientes tienen pelo", "Los gatos viven debajo del pasto", "El fuego es muy frio", "Los gansos tienen plumas moradas", "Los leones bebes son pollos", "Los arboles son rocas", "El pasto es rojo", "Los carros pueden ir sobre el agua", "Las bicicletas tienen cuatro ruedas", "Los elefantes son rojos", "Los pescados nadan en el cielo", "El invierno es muy caliente", "El verano es muy frio", "Los osos viven en nidos", "Las tortugas son muy rápidas", "Te pones los pantalones en los brazos", "La lluvia no moja", "La ropa se lava en el horno", "Un loro puede manejar un avión", "Los ratones leen libros", "Los aviones vuelan en el agua", "Las vacas ladran", "Las ranas producen miel", "Los patos se ponen tenis", "La gente duerme en pianos", "Las piñas son rosadas", "Las cebollas son frutas", "Celebramos navidad en junio", "Hay cuarenta meses en el año", "Hay doscientas letras en el abecedario", "Calientas la comida en la nevera", "Los cerdos viven en la luna", "Los caballos compran en el supermercado", "Las tortas están hechas de madera", "Un microondas puede manejar un Kart", "Los tiburones van al peluquero", "Los burros viven en los techos", "Los murcielagos pilotean helicopteros", "Las ardillas son más grandes que los caballos", "Las maletas se hacen con gelatina", "Los trampolines están hechos con mantequilla", "Los cocodrilos son azules", "Las nubes son de plástico", "Las botas están hechas de leche", "Tu nariz está en tu brazo", "Los cubiertos son para pintar", "Los peces tocan guitarra", "Los relojes son para comer", "Los arcoiris son en blanco y negro", "Los helados son calientes", "La calles están hechas de puntillas", "El opuesto de pesado es verde"], // senseless sentences
+		rec_el_available: genCharArray('A','Z'), //possible recall elements from e.g. 'A' to 'Z'
+		rec_el_trial: [], //recall element that was shown
+		to_rec_set: [], //elements to be recalled
+		keysAllow: ['a','A','l','L'], //keyboard key participants can press to report an answer
+		set_size: [], //number of operations before recalling of elements (per "trial")
+		rec: [] //0 no recall test, 1 participant was asked to recall elements in that trial
+  	}
+	
+	
+	var fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+	var trial_data = {
+			start_time: null, //Stimulus on
+			click_time: null, //target touched			
+			fix_duration: fd, //min, max (ms)
+			trial: trial,
+			trial_setsize: trial_setsize,
+			RT: null, //Response time	
+			MT: null, //memory time	
+			keyPress: null, //subject keyboard response; see keysAllow e.g. A: false, L: true		
+			sideResp: null, //subjects  response 0 left, 1 right			
+			correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        stimulus: null,
+	  		xmouse: [],
+	  		ymouse: [],
+	  		timestamp_mouse: [],
+			xSR: xSR, //Start region coord.
+			ySR: ySR, 
+			xT1: xT1, //Target 1 coord.
+			yT1: yT1, 
+			xT2: xT2, //Target 2 coord.
+			yT2: yT2, 
+			
+			reading: "", //sentence saw by participant
+			read_sense: [], //1 sentence saw by participant made sense result, 0 it didn't make sense
+			rec_el_trial: null, //recall element that was shown 
+			rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 
+			rec_set: [], // elements recalled by participant; should be empty if rec is 0
+			to_rec_set: [],
+			correct_re: null, //1: correct recall of all elements; 0: incorrect recall (at least one element was not remembered or misplaced)
+			nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+			set_size: null, //number of operations before recalling of elements
+			
+			
+			toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+			cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+			subjID: 9999999999,
+			gender: 99, //0 male, 1 female
+			age: 0, //years
+			school: 0, //curso del estudiante
+			test: test      		
+	}
+	
+  	//var file = document.getElementById('fileItem'); // e.g. file.files[1]['name']
+	//removeElement('fileItem')
+	
+	//Randomization of set sizes presented 
+	let f = (a, b) => [].concat(...a.map(a => b.map(b => [].concat(a, b))));
+	let cartesian = (a, b, ...c) => b ? cartesian(f(a, b), ...c) : a; //Cartesian product
+	var exp_conditions =  test.set_size_available; // all experimental conditions 
+	var repeatelem = function(elem, n){
+	    // returns an array with element elem repeated n times.
+	    var arr = [];
+
+	    for (var i = 0; i <= n; i++) {
+	        arr = arr.concat(elem);
+	    };
+
+	    return arr;
+	};	
+	var exp_cond_rep = repeatelem(exp_conditions,test.rep_conds)
+	test.nTrials = exp_cond_rep.length
+	test.nTrials_total = (test.set_size_available.reduce(function(a, b) { return a + b; }, 0))*(test.rep_conds+1); //the first weird factor is the way to add a vector in javascript
+	var bucket = []; //bucket of integers to sample without replacement
+	for (var i=0; i<test.nTrials; i++) {
+	    bucket.push(i);
+	}
+	function getRandomFromBucket() {
+	   var randomIndex = Math.floor(Math.random()*bucket.length);
+	   return bucket.splice(randomIndex, 1)[0];
+	}
+	for (var i=0; i<test.nTrials; i++) {
+	    test.Trials_order.push(getRandomFromBucket()) 
+	}
+	var cs = ['/L/', '/R/']
+	var patt1 = /[0-9]+/g //this regular expression finds numbers in the file name
+	for (var i = 0; i<test.nTrials; i++){ //This loops adds information to the variable test about each trial e.g. set_size,  ...
+		test.cond_shown.push(exp_cond_rep[test.Trials_order[i]])
+		temp = []			
+  	 	for (var j = 0; j<test.cond_shown[i]; j++){
+  	 		test.correct_side.push(Math.floor(Math.random() * 2)) //0 left i.e. incorrect result for operation, 1 right i.e. correct result for operation
+			test.set_size.push(test.cond_shown[i])
+			temp.push(test.rec_el_available[getRandomInt(test.rec_el_available.length)])
+			test.rec_el_trial.push(temp[j])		
+			if (j < test.cond_shown[i] - 1){
+				test.rec.push(0)
+			} else {
+				test.rec.push(1)
+				test.to_rec_set.push(temp)
+			}
+  	 	}
+				
+	}
+   
+   
+   
+    /////////////// PAGE/HTML SETUP	////////////// 
+  	//Area on-screen where x,y mouse coordinates are collected
+	
+  	var resp_area = document.querySelector("body")
+  	resp_area.setAttribute("id","myB");
+	resp_area.setAttribute("ontouchmove","myTouch2(e)");
+	resp_area.setAttribute("style","z-index=4"); 
+  	var myB = document.getElementById("myB");
+  	var rect = myB.getBoundingClientRect();
+	
+	
+  	//HTML element styles
+    var head = document.querySelector("head")
+    var newStyle = document.createElement("style");
+	
+	
+  	//Area on-screen of response targets 
+  	//You can add more targets to a container (more id target#) 
+  	//if you want more targets at different horizontal coordinates create more containers
+  	//IMPORTANT: if you add more targets update myClick function e.g. add resp_area.removeChild(document.querySelector("#target4"));
+  	var newCanvas = document.createElement("canvas");
+  	newCanvas.setAttribute("class","canvas");
+  	newCanvas.setAttribute("id","canvas1");
+  	newCanvas.setAttribute("width", rect.width);
+  	newCanvas.setAttribute("height", rect.height);
+	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+	//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+  	resp_area.appendChild(newCanvas);	
+	//resp_area.insertBefore(newCanvas, document.getElementById("O"));	
+	
+	
+  	var canvas = document.getElementById("canvas1");
+  	var ctx = canvas.getContext("2d");
+  	ctx.fillStyle = "#FF0000";
+	
+  	//Fixation
+  	var prop = .5*rect.width - test.size_fix*0.5
+  	prop = prop/rect.width	
+  	var xFix = prop*rect.width; //Coord. fix
+  	var yFix = 0.4*rect.height;
+  	//ctx.fillStyle = "#000000";
+  	//ctx.font = test.size_fix + "px Arial";
+  	//ctx.fillText("+",xFix,yFix); 
+	
+	
+  	//Target 1
+  	prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5
+  	var xT1 = prop;  //Coord. target 1
+	prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+  	var yT1 = prop;
+  	//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+	
+  	//Target 2
+  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5
+  	var xT2 = prop; //Coord. target 2
+	prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+  	var yT2 = prop;
+  	//ctx.fillRect(xT2,yT2,test.targets_dim[1],test.targets_dim[0]); 
+	
+	//False text
+  	var xF = xT1 + test.targets_dim[1]*0.4; //Coord. target 1
+  	var yF = yT1 + test.targets_dim[0]*0.6;
+	
+	//True text
+  	var xV = xT2 + test.targets_dim[1]*0.35; //Coord. target 2
+  	var yV = yT2 + test.targets_dim[0]*0.6;
+	
+	
+  	//Start region
+	var vert_offset_SR = 0.6
+  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+  	prop = prop/rect.width
+  	var xSR = prop*rect.width; //Coord. start region
+  	var ySR = vert_offset_SR*rect.height;
+  	//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+	
+  
+ 
+	
+  	
+  	var elem = document.documentElement;
+  	
+	
+	////////////////  FUNCTIONS ////////////// 
+	// /storage/emulated/0/Numexp/experimentRDMCanvas.html
+	
+  	//function to handle non-clickable events
+  	var myMouse = function(e){
+		xM = e.clientX; //x position of finger or mouse
+		yM = e.clientY; //y position of finger or mouse
+		mySubjCheck()
+				
+  	}
+		
+	
+  	var myTouch = function(e){
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()	
+  	}
+	
+	function myTouch2(e) {
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()
+	}
+	
+  	var myTouch3 = function(e){
+		e.preventDefault()
+		resp_area.addEventListener("touchmove", myTouch);	
+  	}
+	
+	var myKeyPress = function(e){
+		
+		if (stimOn2 == 0){ //no image on screen do this
+			trial_data.keyPress = e.key;
+			trial_data.click_time = Date.now();
+			keywaspress = 1
+		} else {
+			trial_data.keyPress = ''
+		}
+		
+		//trial_data.keyPress = e.key;
+		//trial_data.click_time = Date.now();
+		//keywaspress = 1
+	}
+	
+	function mySubjID() {
+	  	trial_data.subjID = prompt("Please enter the subject ID", "No_subjID");	  	
+	  	trial_data.age = prompt("Please enter the subject age", "No_age");
+	  	trial_data.school = prompt("Please enter the subject school year", "No_school");
+	  	trial_data.gender = prompt("Please enter the subject gender (0 male, 1 female)", "No_gender");
+	  	removeElement('sid')
+	  	removeElement('Xc')
+	  	removeElement('Yc') 
+ 		elem.webkitRequestFullscreen();
+		
+ 		
+	}
+	
+	
+	//Check full screen (FOR CHROME, Safari use: webkitfullscreenchange; For firefox use: mozfullscreenchange; for Microsoft explorers: msfullscreenchange)
+	document.addEventListener("webkitfullscreenchange", function() {
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5 	  	
+ 	  	xT1 = prop;  //Coord. target 1
+		prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT1 = prop;
+		
+ 	  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5 	  	
+ 	  	xT2 = prop; //Coord. target 2
+		prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT2 = prop;
+		
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height; 
+		
+		
+		
+		//Start region
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#000000";
+		//ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		//ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		//ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+ 		
+		//window.scrollTo(0, 0)	
+		//document.getElementById("myB").focus();
+	});
+	
+	function mySubjCheck() { //To wait for a subjID
+		if (trial_data.subjID == 9999999999){
+			xM = 0
+			yM = 0
+			document.getElementById('Xc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+			document.getElementById('Yc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+		} else {
+			//Comment out or in if online position of the mouse/finger should be displayed
+			//document.getElementById('Xc').innerHTML = 'xSR: ' + Math.round(xSR) + '  xT1: ' + xT1 + '  xT2: ' + xT2 + '  xM: ' + xM
+			//document.getElementById('Yc').innerHTML = 'ySR: ' + Math.round(ySR) + '  yT1: ' + yT1 + '  yT2: ' + yT2 + '  yM: ' + yM
+			//if (full_screen == 0 ){
+			//	removeElement('Xc')
+			//	removeElement('Yc') 
+				//}
+					 	
+		}	
+	}
+	
+	function removeElement(elementId) {
+	    // Removes an element from the document
+	    var element = document.getElementById(elementId);
+	    element.parentNode.removeChild(element);
+	}
+	
+	//Initialize listeners
+	resp_area.addEventListener('mousemove', myMouse);
+	resp_area.addEventListener("touchstart", myTouch3);
+	resp_area.addEventListener("keydown", myKeyPress);
+	
+	
+	//IMPORTANT function controlling exp. flow and to colllect mouse/finger coordinates and check target hit
+	var myI = setInterval(function(){
+		text_re = 'Escriba las ' + trial_data.set_size + " letras en el orden que aparecieron"
+		
+		if (trial == test.nTrials_total){
+			endTask()
+		}
+		
+		if (trial%test.trials_to_rest == 0 & trial>0 & rest == 0){ //BREAK
+			if (rest_temp == 0){
+				rest_temp = 1
+				ctx.fillStyle = "#000000";
+				ctx.font = "20px Arial";
+				ctx.fillText("Descansa. Muevete al rectangulo verde cuando desees continuar", 0.35*xFix,yFix);	
+				ctx.fillStyle = "#228B22";
+				ctx.fillRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+			}
+			 
+			if (xM > xSR && xM < (xSR + test.start_dim[1]) && yM > ySR && yM < (ySR + test.start_dim[0])){ //finger is inside start region
+				rest = 1;
+				clearScreen();
+				//Start region
+				ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+				//target 1
+				ctx.fillStyle = "#FF0000";
+				//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+				//target 2
+				//ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+			}
+		
+			
+		} else if (trial_data.subjID != 9999999999) {
+			//If inside start region do this:			
+			//TIMELINE
+			rest_temp = 0;			
+			if (fixOn == 0) {	
+				fixOn = 1;	
+				leftSR = 0;
+				myFixAppears = setTimeout(function(){ 
+					ctx.fillStyle = "#000000";
+					ctx.font = test.size_fix + "px Arial";
+					ctx.fillText("+",xFix,yFix); //Fixation						
+				}, 100)
+				
+				
+				fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+				myFixGone = setTimeout(function(){ 
+					ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+					ctx.fillRect(0.43*rect.width, 0.3*rect.height, 200, 200); //cover up fixation 		
+				}, fd)
+							
+				myStimAppears = setTimeout(function(){	//The operation appears	
+					stimOn2 = 1				
+					loadStuff();										
+				}, fd + 200) //fd + # where # is how much after fix dissapears the stimulus images appear
+				
+				myStimDisappears = setTimeout(function(){
+					stimOn2 = 0		
+					clearScreen();
+					//Start region
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+					//target 1
+					//ctx.fillStyle = "#FF0000";
+					//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+					//target 2
+					//ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 					
+				}, fd + 200 + test.timestim)
+				
+				myResultAppears = setTimeout(function(){								
+					ctx.fillStyle = "#000000";
+					ctx.font = test.fontsize_read + "px Arial";
+					ctx.fillText("", xFix, yFix);  
+					
+					//target 1
+					//ctx.fillStyle = "#000000";
+					ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+					//False text
+				  	xF = xT1 + test.targets_dim[1]*0.4; //Coord. target 1
+				  	yF = yT1 + test.targets_dim[0]*0.6;					 
+					ctx.font = test.fontsize_read + "px Arial";
+					ctx.fillText('F', xF, yF);
+
+					//target 2
+					//ctx.fillStyle = "#000000";
+					ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+					//True text
+				  	xV = xT2 + test.targets_dim[1]*0.35; //Coord. target 2
+				  	yV = yT2 + test.targets_dim[0]*0.6;
+					ctx.font = test.fontsize_read + "px Arial";
+					ctx.fillText('V', xV, yV);
+					
+					trial_data.start_time = Date.now();				
+					stimOn = 1;			
+					 					
+				}, fd + 200 + test.timestim + 200)
+							
+			}
+		   //trialStarted = 1;		
+		}
+		
+		
+		
+		if (trialStarted == 1 && stimOn == 1 ) {
+			ts = Date.now()-trial_data.start_time;
+			//trial_data.xmouse.push(xM);
+		    //trial_data.ymouse.push(yM);
+			//trial_data.timestamp_mouse.push(ts);
+				
+			
+			
+			if ((xM  > xT1 && xM  < (xT1 + test.targets_dim[1]) && yM  > yT1 && yM  < (yT1 + test.targets_dim[0]) && trial_data.toosoon == 0) || (trial_data.keyPress == test.keysAllow[0] || trial_data.keyPress == test.keysAllow[1])){ //hit target 1 or key press 1
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);	
+				clearTimeout(myResultAppears);
+				trial_data.cond_shown = test.cond_shown[trial_setsize]; 	 							
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 0;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.click_time - trial_data.start_time;  					
+				
+				//trial_data.toosoon = 0;
+				//DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA				
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;						
+				//leftSR = 0;
+				trial_data.keyPress = ""
+				
+				if (trial_data.correct_side != trial_data.sideResp){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myRecall = setTimeout(function(){	
+						clearScreen()	
+						ctx.fillStyle = "#000000";
+						if (trial_data.sideResp == 0) { //left
+							//target 1	turns black	
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT1, yT1); 
+						} else { //right
+							//target 2 turns black
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT2, yT2);
+						}
+						 			 
+												
+					}, 5) 
+					
+					myRecallA = setTimeout(function(){
+						clearScreen()							
+						ctx.fillStyle = "#000000";						
+						ctx.font = test.fontsize_re + "px Arial";
+						ctx.fillText(trial_data.rec_el_trial, xFix, yFix); //element to recall 
+					}, test.timepe)
+					
+					myRecallGoneA = setTimeout(function(){					
+						clearScreen()																
+					}, 0.975*(test.timepe + test.timere))
+					
+					myRecallGone = setTimeout(function(){	
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now();						
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timepe + test.timere)
+					
+					
+				} else {
+					
+					myRecall = setTimeout(function(){
+						clearScreen()					
+						ctx.fillStyle = "#000000";
+						//ctx.font = "20px Arial";
+						ctx.font = test.fontsize_re + "px Arial";
+						ctx.fillText(trial_data.rec_el_trial,xFix,yFix); //element to recall
+					}, 5)
+					
+					myRecallGoneA = setTimeout(function(){					
+						clearScreen()																
+					}, 0.975*test.timere)
+					
+					myRecallGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now();
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timere)
+					
+					//clearScreen()
+					//feedback = 0
+					//fixOn = 0;
+					//init_trial_data();
+				}
+					
+				
+				//trial = trial + 1;			  				
+				//init_trial_data();
+							
+				//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+			
+				
+				
+			} else if ((xM  > xT2 && xM  < (xT2 + test.targets_dim[1]) && yM  > yT2 && yM  < (yT2 + test.targets_dim[0]) && trial_data.toosoon == 0) || (trial_data.keyPress == test.keysAllow[2] || trial_data.keyPress == test.keysAllow[3])) { //hit target 2 or key press 2
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);
+				clearTimeout(myResultAppears);
+				clearScreen()
+				trial_data.cond_shown = test.cond_shown[trial_setsize]; 								
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 1;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.click_time - trial_data.start_time;  					
+				
+				//trial_data.toosoon = 0;
+				//DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA				
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;		
+				//leftSR = 0;	
+				trial_data.keyPress = ""
+				
+				if (trial_data.correct_side != trial_data.sideResp){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myRecall = setTimeout(function(){	
+						clearScreen()	
+						ctx.fillStyle = "#000000";
+						if (trial_data.sideResp == 0) { //left
+							//target 1	turns black	
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT1, yT1); 
+						} else { //right
+							//target 2 turns black
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT2, yT2);
+						}
+						 			 
+												
+					}, 5) 
+				
+					myRecallA = setTimeout(function(){
+						clearScreen()							
+						ctx.fillStyle = "#000000";						
+						ctx.font = test.fontsize_re + "px Arial";
+						ctx.fillText(trial_data.rec_el_trial, xFix, yFix); //element to recall 
+					}, test.timepe)
+					
+					myRecallGoneA = setTimeout(function(){					
+						clearScreen()																
+					}, 0.975*(test.timepe + test.timere))
+					
+					myRecallGone = setTimeout(function(){	
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now();						
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timepe + test.timere)
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+					
+				} else {
+					myRecall = setTimeout(function(){	
+						clearScreen()				
+						ctx.fillStyle = "#000000";
+						//ctx.font = "20px Arial";
+						ctx.font = test.fontsize_re + "px Arial";
+						ctx.fillText(trial_data.rec_el_trial,xFix,yFix); //element to recall  			 
+					}, 5)
+					
+					myRecallGoneA = setTimeout(function(){					
+						clearScreen()																
+					}, 0.975*test.timere)
+					
+					myRecallGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now();
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timere)
+					
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+					//clearScreen()
+					//feedback = 0
+					//fixOn = 0;
+					//init_trial_data();
+				}
+				
+				//trial = trial + 1;		  				
+				//init_trial_data();
+			
+											
+		 	}
+	  	}
+	}, test.samplingrate)  
+	
+	//function to clear screen
+	var clearScreen = function (){
+		ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+		ctx.fillRect(0, 0, rect.width, rect.height); 
+		
+	}
+	
+	//function to empty the global variable trial_data
+	var init_trial_data = function(){
+		if (trial > 0) {
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched				
+				fix_duration: fd, //min, max (ms)
+				trial: trial,
+				trial_setsize: trial_setsize,
+				RT: null, //Response time	
+				MT: null, //memory time		
+				keyPress: null, //subject keyboard response; see keysAllow e.g. A: false, L: true				
+				sideResp: null, //subjects finger response 0 left, 1 right				
+				correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        	stimulus: null,
+	  			xmouse: [],
+	  			ymouse: [],
+	  			timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 
+				
+				reading: "", //sentence saw by participant
+				read_sense: [], //1 sentence saw by participant made sense result, 0 it didn't make sense
+				rec_el_trial: null, //recall element that was shown 
+				rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 
+				rec_set: [], // elements recalled by participant; should be empty if rec is 0
+				to_rec_set: [],
+				correct_re: null, //1: correct recall; 0: incorrect recall
+				nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+				set_size: null, //number of operations before recalling of elements
+			
+			
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school, //curso del estudiante
+				//test: test       		
+			}
+		} else if (trial == 0){
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched				
+				fix_duration: fd, //min, max (ms)
+				trial: trial,
+				trial_setsize: trial_setsize,
+				RT: null, //Response time	
+				MT: null, //memory time					
+				sideResp: null, //subjects finger response 0 left, 1 right				
+				correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        	stimulus: null,
+	  			xmouse: [],
+	  			ymouse: [],
+	  			timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 
+				
+				reading: "", //sentence saw by participant
+				read_sense: [], //1 sentence saw by participant made sense result, 0 it didn't make sense
+				rec_el_trial: null, //recall element that was shown 
+				rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 
+				rec_set: [], // elements recalled by participant; should be empty if rec is 0
+				to_rec_set: [],
+				correct_re: null, //1: correct recall; 0: incorrect recall
+				nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+				set_size: null, //number of operations before recalling of elements
+			
+			
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school, //curso del estudiante
+				test: test    		
+			}
+		}
+		
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5
+ 	  	xT1 = prop; //prop*rect.width; //Coord. target 1
+		prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT1 = prop;
+		
+ 	  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5
+ 	  	xT2 = prop; // prop*rect.width; //Coord. target 2
+		prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT2 = prop;
+		
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height;
+		
+	}
+	
+	//function to load new trial  	
+	var loadStuff = function(){
+		
+	
+		resp_area.addEventListener('mouseover', myMouse);
+		resp_area.removeEventListener('mouseover', myMouse);
+		//resp_area.addEventListener('touchmove', myTouch);
+		//resp_area.removeEventListener('touchmove', myTouch);
+		resp_area.addEventListener('touchstart', myTouch3);
+		resp_area.removeEventListener('touchstart', myTouch3);					
+		trialStarted = 1;				
+		leftSR = 0; //left start region
+		init_trial_data();
+		
+
+		//Start region
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#000000";
+		//ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		//ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+		
+		//Stimulus 		
+		sensee = test.correct_side[trial]
+		if (sensee==1){//show a true result
+			trial_data.reading = test.sense[getRandomInt(test.sense.length)]
+			trial_data.read_sense = 1 			
+		} else { //show a false result
+			trial_data.reading = test.nonsense[getRandomInt(test.nonsense.length)]
+			trial_data.read_sense = 0 
+						
+		}
+
+		trial_data.rec_el_trial = test.rec_el_trial[trial]
+		trial_data.set_size = test.set_size[trial]
+		trial_data.rec = test.rec[trial]
+		
+		ctx.fillStyle = "#000000";
+		ctx.font = test.fontsize_read + "px Arial";
+		metrics = ctx.measureText(trial_data.reading);
+		ctx.fillText(trial_data.reading, xFix - 0.5*metrics.width, yFix); 
+		
+		
+		//stimOn = 1;
+		
+		
+		
+		//trial_data.start_time = Date.now();
+		//trial_data.fix_duration = 1000; //Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]);
+		
+		
+		
+	}
+	
+	//function to save stuff
+	function saveText(text, filename){
+	  var a = document.createElement('a');
+	  a.setAttribute('href', 'data:text/plain;charset=utf-u,'+encodeURIComponent(text));
+	  a.setAttribute('download', filename);
+	  a.click()
+	}
+	
+	
+	 
+   	function openFullscreen() {
+		
+ 		
+		
+     	if (elem.requestFullscreen) {
+       	  	elem.requestFullscreen();
+    	} else if (elem.mozRequestFullScreen) { /* Firefox */
+       		elem.mozRequestFullScreen();
+     	} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+       	  	elem.webkitRequestFullscreen();
+     	} else if (elem.msRequestFullscreen) { /* IE/Edge */
+       	  	elem.msRequestFullscreen();
+     	}
+		
+ 		
+			
+   	}
+	
+   	function closeFullscreen() {
+ 		
+     	if (document.exitFullscreen) {
+       	  document.exitFullscreen();
+     	} else if (document.mozCancelFullScreen) {
+       	  document.mozCancelFullScreen();
+     	} else if (document.webkitExitFullscreen) {
+       	  document.webkitExitFullscreen();
+     	} else if (document.msExitFullscreen) {
+       	  document.msExitFullscreen();
+     	}
+		
+ 		
+		
+   	}
+  	
+	function getRandomInt(max) {
+	  return Math.floor(Math.random() * Math.floor(max));
+	  //e.g. console.log(getRandomInt(3)); //expected output: 0, 1 or 2
+	}
+	
+	// Function to generate an array w/ alphabet letters from charA to charZ e.g. from 'd' to 'k'
+	function genCharArray(charA, charZ) {
+	  var a = [], i = charA.charCodeAt(0), j = charZ.charCodeAt(0);
+	  for (; i <= j; ++i) {
+	    a.push(String.fromCharCode(i));
+	  }
+	  return a;
+	}
+	
+	function FB(rec, to_rec) { //feedback; returns how many elements were remembered correctly
+	    var FB = 0
+		for (i=0; i<=rec.length; ++i){
+			if (i < to_rec.length){
+				if (rec[i] == to_rec[i]){
+					FB = FB + 1
+				}
+			}
+		}
+	    return FB;
+	}
+	
+	//Collect recall and save data
+	function getRec(){
+		if (trial_data.rec == 0) {
+			fixOn = 0;
+			trial = trial + 1;
+			DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA					
+			init_trial_data();
+		} else {
+			trial_data.to_rec_set = test.to_rec_set[trial_setsize].join("") //the actual letters to remember
+			trial_data.to_rec_set = trial_data.to_rec_set.toLowerCase()
+			temp = []
+			ctx.fillStyle = "#000000";
+			ctx.font = test.fontsize_in + "px Arial";
+			ctx.fillText(text_re, xFix,1.25*yFix);							
+			var myI2 = setInterval(function(){
+				if (keywaspress == 1 && trial_data.keyPress == 'Backspace'){
+					temp.splice(-1,1) //erases last element
+					clearScreen()
+					ctx.fillStyle = "#000000";
+					ctx.font = test.fontsize_in + "px Arial";
+					ctx.fillText(text_re, xFix,1.25*yFix);
+					ctx.font = test.fontsize_re + "px Arial";
+					ctx.fillText(temp.join(""),xFix,yFix);
+				  	//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); //start region
+					keywaspress = 0 
+				} else if (keywaspress == 1 && trial_data.keyPress != 'Enter'){
+					temp.push(trial_data.keyPress)
+					clearScreen()
+					ctx.fillStyle = "#000000";
+					ctx.font = test.fontsize_in + "px Arial";
+					ctx.fillText(text_re, xFix,1.25*yFix);
+					ctx.font = test.fontsize_re + "px Arial";
+					ctx.fillText(temp.join(""),xFix,yFix);
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); //start region
+					keywaspress = 0 									 
+				}																
+				
+				
+				if (trial_data.keyPress == 'Enter'){
+					trial_data.MT = Date.now() - timePH;
+					trial_data.rec_set = temp.join("")
+					//trial_data.rec_set = prompt("Escribe todas las letras que viste")
+					trial_data.rec_set = trial_data.rec_set.toLowerCase()
+					recT = trial_data.rec_set.split("");
+					to_recT = trial_data.to_rec_set.split("");
+					trial_data.nCorrect = FB(recT, to_recT)
+					clearScreen()										
+					ctx.fillStyle = "#000000";									
+					ctx.font = test.fontsize_in + "px Arial";		 																				
+					ctx.fillText('Recordaste ' + trial_data.nCorrect + " de " + to_recT.length,xFix,yFix);
+					if (trial_data.to_rec_set == trial_data.rec_set){
+						trial_data.correct_re = 1 										
+					} else {
+						trial_data.correct_re = 0
+					}	
+					trial_setsize = trial_setsize + 1
+					trial = trial + 1;	
+					DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA
+					clearInterval(myI2);
+					myWait = setTimeout(function(){																								
+						init_trial_data();
+						fixOn = 0;
+						//clearInterval(myI2);
+					}, test.fbtime)						
+				}
+				//if (temp.length > trial_data.set_size){
+				//	temp.splice(0,1) //erases first element 
+				//}																
+			},5)
+			
+		}
+	}
+	
+	//End task
+	function endTask() {
+		clearInterval(myI);		
+		resp_area.removeEventListener('mousemove', myMouse);
+		//resp_area.removeEventListener('touchmove', myTouch);					
+		resp_area.removeEventListener('touchstart', myTouch3);	
+		resp_area.removeEventListener('onkeypress', myKeyPress);				
+		ctx.fillStyle = "#000000";
+		ctx.font = "20px Arial";
+		ctx.fillText("Thanks for your participation",xFix, 1.25*yFix); 
+		saveText(JSON.stringify(DATA), trial_data.subjID + "_ReadSpan_data.json");
+	}
+	
+  </script>
+	
+</html>

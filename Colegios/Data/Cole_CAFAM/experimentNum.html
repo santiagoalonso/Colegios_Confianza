@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My experiment NUM</title>
+  </head>
+  <style>
+  	body{height:100%; width:100%}
+	html{height:100%; width:100%}
+	.button1 {font-size: 5px;}
+  </style>
+  <body> 
+	  <img src="img/blue.png" id="ph" alt="HTML5 Icon" width="0" height="0"> <!-- place holder for images to be shown -->
+	  <button  id = 'sid' style = "z-index: 1" onclick="mySubjID();" class="button button1">SID</button> <!-- ask subj. id -->
+	  <p id = 'Xc'> X </p>
+	  <p id = 'Yc'> Y </p>
+	  
+  </body>
+  
+  <script>
+	
+	 //<button  id = 'O' style = "z-index: 1" onclick="openFullscreen();" class="button button1">O</button> opens full screen -->
+	 //  <button  id = 'C' style = "z-index: 1" onclick="closeFullscreen();" class="button button1">C</button> closes full screen -->
+	 // <input type="file" id="fileItem" webkitdirectory mozdirectory /> // access to full folder
+	  //mysubjID + myTouch3 + mySubjCheck + document.addEventListener("webkitfullscreenchange"
+	  
+	  //file:///storage/emulated/0/NumExp/*.html EXAMPLE OF PATH FOR ANDROID 
+	  
+	  
+	  
+  	////////////// VARIABLES ///////////////
+	
+	
+	var trialStarted = 10;
+	var fixOn = 0;
+  	var stimOn = 0;
+  	var leftSR = 0; //index left start region
+  	var xM = 0; //mouse x coordinate
+  	var yM = 0; //mouse y coordinate
+  	var trial = 0;
+  	var sideResp = 0; // 1 left, 2 right
+	var rest = 0; // rest screen is off (0), or moved from on to off (1)
+	var rest_temp = 0; // to avoid repainting the rest font
+	var feedback = 500; // duration of feedback in ms
+  	var DATA = [];
+  	var test = { //Test trials variables
+  		fix_dur: [250, 1500], //[max, min] of fix duration (ms)	
+		timestim: 300, //how much time is the stimulus on screen (ms)	
+  		targets_dim: [100,100], //[height, width] pixels
+  		targets_relative_coord: [.3, .7], //Horz. coord. [leftcoordT1, leftcoordT2 ] in % of the body-tag width; 
+  		size_stim: [880,420], //[height, width] 
+  		start_dim: [100,100],  //[height, width] 
+  		size_start: [300,300], //[height, width] ... size where finger/mouse should start  
+  	    //choices: ['f', 'j'], // 'The keys the subject is allowed to press to respond to the stimulus.'
+  		size_fix: 60, //px
+  		samplingrate: 20, //sampling rate (in ms) e.g. 20 is one sample every 20 ms
+		img_types: ['equaldotsize', 'equaldotanddens', 'randomdotsizeEA'], //Name of folders in each ratio folder. equaldotsize: all dots equal size; equaldotanddens: all dots equal size and both clouds have equal density; randomdotsize: dots have random size; randomdotsizeEA: dots have random size and both clouds have equal cumulative area across dots
+		//ratios: [0, 250, 500, 750, 900, 1000], //Numerical ratio between the two options. Ratios are out of 1000 e.g. 250 is a 0.25 ratio
+		ratios: [250, 500, 750, 900],
+		rep_conds: 9, //Number of times experimental conditions are repeated e.g. if 0 only once every condition; e.g. 2 if 2, then exp_conditions will be looped 3 times (1 original and 2 additional repetitions)
+		nTrials: 0, //Number of trials (updated below)
+		trials_to_rest: 500, //Number of trials before resting screen
+		Trials_order: [], //index to randomize exp_cond_rep i.e. vector with images shown
+		cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 
+	 	ratio_trial:[], //IMPORTANT: ratio shown on trial (over 1000)
+		smaller_num: [], //IMPORTANT: smaller number on trial
+		larger_num: [], //IMPORTANT: larger number on trial
+		correct_side: [], //IMPORTANT: side of larger number (1 left, 2 right)
+		img_shown: [], //IMPORTANT: filename i.e. image presented
+		
+		//What follows are arrays with file names with images e.g. L_250 is ratio 0.25 with larger image on the left 
+		//(TO IMPROVE; THIS IS BRUTE FORCE i.e. MANUALLY COPY AND PASTE FROM CSV FILES; I HAVENT BEEN ABLE TO READ CSV FILE)
+		//Images were randomly generated in R in the script MakeDotArray.R. 
+		
+		//(file names in each folder)(first element images with correct on the left; second element images with correct on the right)
+		Rat0: [["12_Ratio_0_L_9_R_0.png","13_Ratio_0_L_6_R_0.png","5_Ratio_0_L_2_R_0.png","6_Ratio_0_L_4_R_0.png","8_Ratio_0_L_6_R_0.png"], ["1_Ratio_0_L_0_R_17.png","10_Ratio_0_L_0_R_22.png","11_Ratio_0_L_0_R_1.png","14_Ratio_0_L_0_R_24.png","15_Ratio_0_L_0_R_4.png","2_Ratio_0_L_0_R_5.png","3_Ratio_0_L_0_R_17.png","4_Ratio_0_L_0_R_7.png","7_Ratio_0_L_0_R_19.png","9_Ratio_0_L_0_R_15.png"]], 
+		Rat250: [["1_Ratio_250_L_8_R_2.png","14_Ratio_250_L_12_R_3.png","15_Ratio_250_L_12_R_3.png","2_Ratio_250_L_16_R_4.png","3_Ratio_250_L_8_R_2.png","5_Ratio_250_L_24_R_6.png","7_Ratio_250_L_8_R_2.png"], ["10_Ratio_250_L_4_R_16.png","11_Ratio_250_L_3_R_12.png","12_Ratio_250_L_5_R_20.png","13_Ratio_250_L_2_R_8.png","4_Ratio_250_L_3_R_12.png","6_Ratio_250_L_6_R_24.png","8_Ratio_250_L_1_R_4.png","9_Ratio_250_L_3_R_12.png"]],
+		Rat500: [["10_Ratio_500_L_4_R_2.png","11_Ratio_500_L_12_R_6.png","13_Ratio_500_L_12_R_6.png","4_Ratio_500_L_18_R_9.png","5_Ratio_500_L_4_R_2.png","7_Ratio_500_L_10_R_5.png","8_Ratio_500_L_8_R_4.png"], ["1_Ratio_500_L_9_R_18.png","12_Ratio_500_L_1_R_2.png","14_Ratio_500_L_5_R_10.png","15_Ratio_500_L_1_R_2.png","2_Ratio_500_L_3_R_6.png","3_Ratio_500_L_10_R_20.png","6_Ratio_500_L_9_R_18.png","9_Ratio_500_L_2_R_4.png"]],
+		Rat750: [["1_Ratio_750_L_20_R_15.png","10_Ratio_750_L_4_R_3.png","13_Ratio_750_L_8_R_6.png","14_Ratio_750_L_8_R_6.png","6_Ratio_750_L_24_R_18.png","8_Ratio_750_L_4_R_3.png","9_Ratio_750_L_4_R_3.png"], ["11_Ratio_750_L_12_R_16.png","12_Ratio_750_L_3_R_4.png","15_Ratio_750_L_9_R_12.png","2_Ratio_750_L_6_R_8.png","3_Ratio_750_L_15_R_20.png","4_Ratio_750_L_15_R_20.png","5_Ratio_750_L_15_R_20.png","7_Ratio_750_L_3_R_4.png"]],
+		Rat900: [["1_Ratio_900_L_10_R_9.png","10_Ratio_900_L_20_R_18.png","2_Ratio_900_L_20_R_18.png","4_Ratio_900_L_20_R_18.png","8_Ratio_900_L_20_R_18.png"], ["11_Ratio_900_L_18_R_20.png","12_Ratio_900_L_18_R_20.png","13_Ratio_900_L_18_R_20.png","14_Ratio_900_L_18_R_20.png","15_Ratio_900_L_9_R_10.png","3_Ratio_900_L_9_R_10.png","5_Ratio_900_L_9_R_10.png","6_Ratio_900_L_9_R_10.png","7_Ratio_900_L_9_R_10.png","9_Ratio_900_L_18_R_20.png"]],
+		Rat1000: [["10_Ratio_1000_L_16_R_16.png","11_Ratio_1000_L_6_R_6.png","12_Ratio_1000_L_14_R_14.png","13_Ratio_1000_L_20_R_20.png","15_Ratio_1000_L_15_R_15.png","2_Ratio_1000_L_17_R_17.png","4_Ratio_1000_L_9_R_9.png","5_Ratio_1000_L_6_R_6.png","6_Ratio_1000_L_19_R_19.png","8_Ratio_1000_L_14_R_14.png","9_Ratio_1000_L_25_R_25.png"], ["1_Ratio_1000_L_1_R_1.png","14_Ratio_1000_L_17_R_17.png","3_Ratio_1000_L_17_R_17.png","7_Ratio_1000_L_6_R_6.png"]],	
+  	}
+	
+	var fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+	var trial_data = {
+			start_time: null, //Stimulus on
+			click_time: null, //target touched
+			finger_time: null, //finger/mouse left start region
+			fix_duration: fd, //min, max (ms)
+			trial: trial,
+			RT: null, //Response time
+			MT: null, //Movement time
+			sideResp: null, //subjects response 1 left, 2 right
+	        stimulus: null,
+	  		xmouse: [],
+	  		ymouse: [],
+	  		timestamp_mouse: [],
+			xSR: xSR, //Start region coord.
+			ySR: ySR, 
+			xT1: xT1, //Target 1 coord.
+			yT1: yT1, 
+			xT2: xT2, //Target 2 coord.
+			yT2: yT2, 
+			toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+			cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 
+	 		ratio_trial:[], //IMPORTANT: ratio shown on trial (over 1000)
+			smaller_num: [], //IMPORTANT: smaller number on trial
+			larger_num: [], //IMPORTANT: larger number on trial
+			correct_side: [], //IMPORTANT: side of larger number (0 left, 1 right)
+			subjID: 9999999999,
+			gender: 99, //0 male, 1 female
+			age: 0, //years
+			school: 0, //curso del estudiante
+			test: test      		
+	}
+	
+  	//var file = document.getElementById('fileItem'); // e.g. file.files[1]['name']
+	//removeElement('fileItem')
+	
+	//Randomization of trials i.e. images shown 
+	let f = (a, b) => [].concat(...a.map(a => b.map(b => [].concat(a, b))));
+	let cartesian = (a, b, ...c) => b ? cartesian(f(a, b), ...c) : a; //Cartesian product
+	var exp_conditions =  cartesian(test.ratios,test.img_types); // all experimental conditions i.e. ratios X img_types
+	var repeatelem = function(elem, n){
+	    // returns an array with element elem repeated n times.
+	    var arr = [];
+
+	    for (var i = 0; i <= n; i++) {
+	        arr = arr.concat(elem);
+	    };
+
+	    return arr;
+	};	
+	var exp_cond_rep = repeatelem(exp_conditions,test.rep_conds)
+	test.nTrials = exp_cond_rep.length
+	var bucket = []; //bucket of integers to sample without replacement
+	for (var i=0; i<test.nTrials; i++) {
+	    bucket.push(i);
+	}
+	function getRandomFromBucket() {
+	   var randomIndex = Math.floor(Math.random()*bucket.length);
+	   return bucket.splice(randomIndex, 1)[0];
+	}
+	for (var i=0; i<test.nTrials; i++) {
+	    test.Trials_order.push(getRandomFromBucket()) 
+	}
+	var cs = ['/L/', '/R/']
+	var patt1 = /[0-9]+/g //this regular expression finds numbers in the file name
+	for (var i = 0; i<test.nTrials; i++){ //This loops adds information to the variable test about each trial e.g. img, ratio, left_num, right_num, correct_side ...
+  	 
+  	  // GENERAL EXPRESSION TO GET NUMBERS FROM NAME FILES
+		test.cond_shown.push(exp_cond_rep[test.Trials_order[i]][1])
+		test.ratio_trial.push(exp_cond_rep[test.Trials_order[i]][0])
+	  	test.correct_side.push(Math.floor(Math.random() * 2)) //0 left, 1 right
+		
+	  
+		// IMPORTANT: for the following conditionals see test.ratios and modify accordingly
+		if (test.ratio_trial[i]==0){ 
+			im = test.Rat0[test.correct_side[i]]
+		} else if (test.ratio_trial[i]==250){
+			im = test.Rat250[test.correct_side[i]]
+		} else if (test.ratio_trial[i]==500){
+			im = test.Rat500[test.correct_side[i]]
+		} else if (test.ratio_trial[i]==750){
+			im = test.Rat750[test.correct_side[i]]
+		} else if (test.ratio_trial[i]==900){
+			im = test.Rat900[test.correct_side[i]]		
+		} else if (test.ratio_trial[i]==1000){
+			im = test.Rat1000[test.correct_side[i]]
+			
+		}
+	  	
+		
+		temp = Math.floor(Math.random() * im.length) // picks random image for the current ratio and condition
+		file_name = "img/" + test.ratio_trial[i] + "/" + test.cond_shown[i] + cs[test.correct_side[i]] + im[temp]
+  	  	result = file_name.match(patt1) //regular expression match
+		if (test.correct_side[i] == 0) {
+	  		test.larger_num.push(result[3])
+			test.smaller_num.push(result[4])
+		} else if (test.correct_side[i] == 1) {
+	  		test.larger_num.push(result[4])
+			test.smaller_num.push(result[3])
+		}
+		test.img_shown.push(file_name)
+		
+		test.correct_side[i] = test.correct_side[i] + 1 //this changes to 1 left and 2 right (so it matches side_resp in trial_data
+	}
+   
+   
+   
+    /////////////// PAGE/HTML SETUP	////////////// 
+  	//Area on-screen where x,y mouse coordinates are collected
+	
+  	var resp_area = document.querySelector("body")
+  	resp_area.setAttribute("id","myB");
+	resp_area.setAttribute("ontouchmove","myTouch2(e)");
+	resp_area.setAttribute("style","z-index=4"); 
+  	var myB = document.getElementById("myB");
+  	var rect = myB.getBoundingClientRect();
+	
+	
+  	//HTML element styles
+    var head = document.querySelector("head")
+    var newStyle = document.createElement("style");
+	
+	
+  	//Area on-screen of response targets 
+  	//You can add more targets to a container (more id target#) 
+  	//if you want more targets at different horizontal coordinates create more containers
+  	//IMPORTANT: if you add more targets update myClick function e.g. add resp_area.removeChild(document.querySelector("#target4"));
+  	var newCanvas = document.createElement("canvas");
+  	newCanvas.setAttribute("class","canvas");
+  	newCanvas.setAttribute("id","canvas1");
+  	newCanvas.setAttribute("width", rect.width);
+  	newCanvas.setAttribute("height", rect.height);
+	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+	//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+  	resp_area.appendChild(newCanvas);	
+	//resp_area.insertBefore(newCanvas, document.getElementById("O"));	
+	
+	
+  	var canvas = document.getElementById("canvas1");
+  	var ctx = canvas.getContext("2d");
+  	ctx.fillStyle = "#FF0000";
+	
+  	//Target 1
+  	var prop = test.targets_relative_coord[0]*rect.width - test.targets_dim[1]*0.5
+  	//prop = prop/rect.width
+  	var xT1 = prop; //prop*rect.width; //Coord. target 1
+  	var yT1 = 0;
+  	//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+	
+  	//Target 2
+  	prop = test.targets_relative_coord[1]*rect.width - test.targets_dim[1]*0.5
+  	//prop = prop/rect.width
+  	var xT2 = prop; //prop*rect.width; //Coord. target 2
+  	var yT2 = 0;
+  	//ctx.fillRect(xT2,yT2,test.targets_dim[1],test.targets_dim[0]); 
+	
+  	//Start region
+	var vert_offset_SR = 0.65
+  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+  	prop = prop/rect.width
+  	var xSR = prop*rect.width; //Coord. start region
+  	var ySR = vert_offset_SR*rect.height;
+  	ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+	
+  	//Stimulus image
+	document.getElementById("ph").src = test.img_shown[trial];
+	//document.getElementById("ph").height = 50;
+	//document.getElementById("ph").width = 50;	
+	scaaling = 0.7	//determines how much the original image is reduced/increased
+	heeight = document.getElementById("ph").naturalHeight;
+	wiidth = document.getElementById("ph").naturalWidth;
+  	prop = 0.5*rect.width - scaaling*wiidth*0.5
+  	prop = prop/rect.width	  
+  	var xStim = prop*rect.width; //Coord. stimulus
+  	var yStim = 0.2*rect.height; 
+ 
+	
+  	//Fixation
+  	prop = .5*rect.width - test.size_fix*0.5
+  	prop = prop/rect.width	
+  	var xFix = prop*rect.width; //Coord. fix
+  	var yFix = 0.4*rect.height;
+  	//ctx.fillStyle = "#000000";
+  	//ctx.font = test.size_fix + "px Arial";
+  	//ctx.fillText("+",xFix,yFix); 
+	
+  	var elem = document.documentElement;
+  	
+	
+	////////////////  FUNCTIONS ////////////// 
+	// /storage/emulated/0/Numexp/experimentRDMCanvas.html
+	
+  	//function to handle non-clickable events
+  	var myMouse = function(e){
+		xM = e.clientX; //x position of finger or mouse
+		yM = e.clientY; //y position of finger or mouse
+		mySubjCheck()
+				
+  	}
+		
+	
+  	var myTouch = function(e){
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()	
+  	}
+	
+	function myTouch2(e) {
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()
+	}
+	
+  	var myTouch3 = function(e){
+		e.preventDefault()
+		resp_area.addEventListener("touchmove", myTouch);	
+  	}
+	
+	function mySubjID() {
+	  	trial_data.subjID = prompt("Please enter the subject ID", "Nombre_Apellidos_NumeroLista");	  	
+	  	trial_data.age = prompt("Please enter the subject age", "No_age");
+	  	trial_data.school = prompt("Please enter the subject school year", "No_school");
+	  	trial_data.gender = prompt("Please enter the subject gender (0 male, 1 female)", "No_gender");
+	  	removeElement('sid')
+	  	removeElement('Xc')
+	  	removeElement('Yc') 
+ 		elem.webkitRequestFullscreen();
+		
+ 		
+	}
+	
+	
+	//Check full screen (FOR CHROME, Safari use: webkitfullscreenchange; For firefox use: mozfullscreenchange; for Microsoft explorers: msfullscreenchange)
+	document.addEventListener("webkitfullscreenchange", function() {
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_coord[0]*rect.width - test.targets_dim[1]*0.5
+ 	  	//prop = prop/rect.width
+ 	  	xT1 = prop; //prop*rect.width; //Coord. target 1
+ 	  	yT1 = 0;
+ 	  	prop = test.targets_relative_coord[1]*rect.width - test.targets_dim[1]*0.5
+ 	  	//prop = prop/rect.width
+ 	  	xT2 = prop; // prop*rect.width; //Coord. target 2
+ 	  	yT2 = 0;
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height; 
+		
+		
+		
+		//Start region
+		ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#FF0000";
+		ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+ 		
+		//window.scrollTo(0, 0)	
+		//document.getElementById("myB").focus();
+	});
+	
+	function mySubjCheck() { //To wait for a subjID
+		if (trial_data.subjID == 9999999999){
+			xM = 0
+			yM = 0
+			document.getElementById('Xc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+			document.getElementById('Yc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+		} else {
+			//Comment out or in if online position of the mouse/finger should be displayed
+			//document.getElementById('Xc').innerHTML = 'xSR: ' + Math.round(xSR) + '  xT1: ' + xT1 + '  xT2: ' + xT2 + '  xM: ' + xM
+			//document.getElementById('Yc').innerHTML = 'ySR: ' + Math.round(ySR) + '  yT1: ' + yT1 + '  yT2: ' + yT2 + '  yM: ' + yM
+			//if (full_screen == 0 ){
+			//	removeElement('Xc')
+			//	removeElement('Yc') 
+				//}
+					 	
+		}	
+	}
+	
+	function removeElement(elementId) {
+	    // Removes an element from the document
+	    var element = document.getElementById(elementId);
+	    element.parentNode.removeChild(element);
+	}
+	
+	//Initialize listeners
+	resp_area.addEventListener('mousemove', myMouse);
+	resp_area.addEventListener("touchstart", myTouch3);
+	
+	
+	
+	//IMPORTANT function controlling exp. flow and to colllect mouse/finger coordinates and check target hit
+	var myI = setInterval(function(){
+		 
+		if (trial%test.trials_to_rest == 0 & trial>0 & rest == 0){ //BREAK
+			if (rest_temp == 0){
+				rest_temp = 1
+				ctx.fillStyle = "#000000";
+				ctx.font = "20px Arial";
+				ctx.fillText("Descansa. Muevete al rectangulo verde cuando desees continuar", 0.35*xFix,yFix);	
+				ctx.fillStyle = "#228B22";
+				ctx.fillRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+			}
+			 
+			if (xM > xSR && xM < (xSR + test.start_dim[1]) && yM > ySR && yM < (ySR + test.start_dim[0])){ //finger is inside start region
+				rest = 1;
+				clearScreen();
+				//Start region
+				ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+				//target 1
+				ctx.fillStyle = "#FF0000";
+				ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+				//target 2
+				ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+			}
+		
+			
+		} else if (xM > xSR && xM < (xSR + test.start_dim[1]) && yM > ySR && yM < (ySR + test.start_dim[0])){
+			//If inside start region do this:			
+			//TIMELINE
+			rest_temp = 0;
+			//if (trialStarted == 10 || trialStarted == 0) {
+			if (fixOn == 0) {	
+				fixOn = 1;	
+				leftSR = 0;
+				myFixAppears = setTimeout(function(){ 
+					ctx.fillStyle = "#000000";
+					ctx.font = test.size_fix + "px Arial";
+					ctx.fillText("+",xFix,yFix); //Fixation						
+				}, 100)
+				
+				
+				fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+				myFixGone = setTimeout(function(){ 
+					ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+					ctx.fillRect(0.43*rect.width, 0.3*rect.height, 200, 200); //cover up fixation 		
+				}, fd)
+							
+				myStimAppears = setTimeout(function(){					
+					loadStuff();										
+				}, fd + 200) //fd + # where # is how much after fix dissapears the stimulus images appear
+				
+				myStimDisappears = setTimeout(function(){	
+									
+					clearScreen();
+					//Start region
+					ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+					//target 1
+					ctx.fillStyle = "#FF0000";
+					ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+					//target 2
+					ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 					
+				}, fd + 200 + test.timestim)
+							
+			}
+		   //trialStarted = 1;		
+		}
+		
+		if ((xM < xSR || xM > (xSR + test.start_dim[1]) || yM < ySR || yM > (ySR + test.start_dim[0])) && leftSR == 0 && trialStarted == 0 ){
+			trial_data.finger_time = Date.now(); //mouse/finger left the start region 
+			leftSR = 1;			
+			if (stimOn==0){
+				clearScreen();	
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);	
+				clearTimeout(myStimDisappears);	
+				//trial_data.toosoon = 1;			
+				//DATA.push(JSON.parse(JSON.stringify(trial_data))); 
+				//stimOn = 0;
+				//trialStarted = 0;
+				//fixOn = 0;
+				//leftSR = 0;
+				init_trial_data();
+				ctx.fillStyle = "#000000";
+				ctx.font = "20px Arial";
+				ctx.fillText("Espera en la posicion inicial hasta ver los puntos", 0.8*xFix,yFix);	
+				//resp_area.removeEventListener('mousemove', myMouse);
+				myPenalty = setTimeout(function(){
+					clearScreen();
+					ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+					fixOn = 0;
+					//leftSR = 0;										 		
+				}, 1500)
+				if (trial == test.nTrials - 1) {
+					clearInterval(myI);
+					clearTimeout(myPenalty);
+					clearScreen();
+					resp_area.removeEventListener('mousemove', myMouse);
+					//resp_area.removeEventListener('touchmove', myTouch);					
+					resp_area.removeEventListener('touchstart', myTouch3);					
+					ctx.fillStyle = "#000000";
+					ctx.font = "20px Arial";
+					ctx.fillText("Espera en la posicion inicial ... gracias por tu participacion",xFix,yFix); 
+					saveText(JSON.stringify(DATA), trial_data.subjID + "_NUM_data.json");
+				}	
+				//trial = trial + 1;	
+			}
+		}
+		
+		if (trialStarted == 1 && stimOn == 1 ) {
+			ts = Date.now()-trial_data.start_time;
+			trial_data.xmouse.push(xM);
+		    trial_data.ymouse.push(yM);
+			trial_data.timestamp_mouse.push(ts);
+			if (xM < xSR || xM > (xSR + test.start_dim[1]) || yM < ySR || yM > (ySR + test.start_dim[0])) { //erases stimulus image once the index finger moved out of the start position and moves towards a target 	
+				if (leftSR == 0) {
+					trial_data.finger_time = Date.now();
+				}				
+				leftSR = 1;
+				ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+				ctx.fillRect(0, 0, rect.width, rect.height); 
+				//Start region
+				ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+				//target 1
+				ctx.fillStyle = "#FF0000";
+				ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+				//target 2
+				ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+			}	
+			
+			
+			if (xM  > xT1 && xM  < (xT1 + test.targets_dim[1]) && yM  > yT1 && yM  < (yT1 + test.targets_dim[0]) && trial_data.toosoon == 0){ //hit target 1
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);	
+				trial_data.cond_shown = test.cond_shown[trial]; 
+	 			trial_data.ratio_trial = test.ratio_trial[trial]; 
+				trial_data.smaller_num = test.smaller_num[trial]; 
+				trial_data.larger_num = test.larger_num[trial];
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 1;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.finger_time - trial_data.start_time;  					
+				trial_data.MT = trial_data.click_time - trial_data.finger_time;
+				//trial_data.toosoon = 0;
+				DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA	
+				trial = trial + 1;
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;						
+				//leftSR = 0;
+				
+				
+				if (trial_data.correct_side != trial_data.sideResp && trial_data.ratio_trial<1000){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myFeedback = setTimeout(function(){	
+						ctx.fillStyle = "#000000";
+						if (trial_data.correct_side == 1) { //left
+							//target 1		
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+						} else { //right
+							//target 2
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+						}
+						ctx.fillStyle = "#000000";
+						ctx.font = "20px Arial";
+						ctx.fillText("ERROR",xFix,yFix); 			 
+												
+					}, 5) 
+				
+					myFeedbackGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						fixOn = 0;
+						//Start region
+						ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, feedback)
+					
+				} else {
+					clearScreen()
+					//feedback = 0
+					fixOn = 0;
+					//init_trial_data();
+				}
+									  				
+				init_trial_data();
+							
+				
+			
+				if (trial < test.nTrials){
+					ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+					
+				
+				} else {
+					clearInterval(myI);
+					resp_area.removeEventListener('mousemove', myMouse);
+					//resp_area.removeEventListener('touchmove', myTouch);					
+					resp_area.removeEventListener('touchstart', myTouch3);					
+					ctx.fillStyle = "#000000";
+					ctx.font = "20px Arial";
+					ctx.fillText("Thanks for your participation",xFix,yFix); 
+					saveText(JSON.stringify(DATA), trial_data.subjID + "_NUM_data.json");
+				}
+				
+			} else if (xM  > xT2 && xM  < (xT2 + test.targets_dim[1]) && yM  > yT2 && yM  < (yT2 + test.targets_dim[0]) && trial_data.toosoon == 0) { //hit target 2
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);
+				clearScreen()
+				trial_data.cond_shown = test.cond_shown[trial]; 
+	 			trial_data.ratio_trial = test.ratio_trial[trial]; 
+				trial_data.smaller_num = test.smaller_num[trial]; 
+				trial_data.larger_num = test.larger_num[trial];
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 2;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.finger_time - trial_data.start_time;  					
+				trial_data.MT = trial_data.click_time - trial_data.finger_time;
+				//trial_data.toosoon = 0;
+				DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA
+				trial = trial + 1;	
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;		
+				//leftSR = 0;	
+				
+				if (trial_data.correct_side != trial_data.sideResp && trial_data.ratio_trial<1000){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myFeedback = setTimeout(function(){	
+						ctx.fillStyle = "#000000";
+						if (trial_data.correct_side == 1) { //left
+							//target 1		
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+						} else { //right
+							//target 2
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+						}
+						ctx.fillStyle = "#000000";
+						ctx.font = "20px Arial";
+						ctx.fillText("ERROR",xFix,yFix); 			 
+												
+					}, 5) 
+				
+					myFeedbackGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						fixOn = 0;
+						//Start region
+						ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, feedback)
+					
+				} else {
+					clearScreen()
+					//feedback = 0
+					fixOn = 0;
+					//init_trial_data();
+				}
+							  				
+				init_trial_data();
+			
+				if (trial < test.nTrials){
+					ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+				
+				
+				} else {
+					clearInterval(myI);
+					resp_area.removeEventListener('mousemove', myMouse);
+					//resp_area.removeEventListener('touchmove', myTouch);					
+					resp_area.removeEventListener('touchstart', myTouch3);					
+					ctx.fillStyle = "#000000";
+					ctx.font = "20px Arial";
+					ctx.fillText("Thanks for your participation",xFix,yFix); 
+					saveText(JSON.stringify(DATA), trial_data.subjID + "_NUM_data.json");
+				}							
+		 	}
+	  	}
+	}, test.samplingrate)  
+	
+	//function to clear screen
+	var clearScreen = function (){
+		ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+		ctx.fillRect(0, 0, rect.width, rect.height); 
+		
+	}
+	
+	//function to empty the global variable trial_data
+	var init_trial_data = function(){
+		if (trial > 0) {
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched
+				finger_time: null, //finger/mouse left start region
+				fix_duration: fd,
+				trial: trial,
+				RT: null, //Response time
+				MT: null, //Movement time
+				sideResp: null, //subjects response 1 left, 2 right
+		        stimulus: test.img_shown[trial],
+		  		xmouse: [],
+		  		ymouse: [],
+		  		timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 
+		 		ratio_trial:[], //IMPORTANT: ratio shown on trial (over 1000)
+				smaller_num: [], //IMPORTANT: smaller number on trial
+				larger_num: [], //IMPORTANT: larger number on trial
+				correct_side: [], //IMPORTANT: side of larger number (1 left, 2 right)
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school, //curso del estudiante
+				//test: test      		
+			}
+		} else if (trial == 0){
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched
+				finger_time: null, //finger/mouse left start region
+				fix_duration: fd,
+				trial: trial,
+				RT: null, //Response time
+				MT: null, //Movement time
+				sideResp: null, //subjects response 1 left, 2 right
+		        stimulus: test.img_shown[trial],
+		  		xmouse: [],
+		  		ymouse: [],
+		  		timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 
+		 		ratio_trial:[], //IMPORTANT: ratio shown on trial (over 1000)
+				smaller_num: [], //IMPORTANT: smaller number on trial
+				larger_num: [], //IMPORTANT: larger number on trial
+				correct_side: [], //IMPORTANT: side of larger number (1 left, 2 right)
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school,
+				test: test      		
+			}
+		}
+		
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_coord[0]*rect.width - test.targets_dim[1]*0.5
+ 	  	//prop = prop/rect.width
+ 	  	xT1 = prop; //prop*rect.width; //Coord. target 1
+ 	  	yT1 = 0;
+ 	  	prop = test.targets_relative_coord[1]*rect.width - test.targets_dim[1]*0.5
+ 	  	//prop = prop/rect.width
+ 	  	xT2 = prop; // prop*rect.width; //Coord. target 2
+ 	  	yT2 = 0;
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height;
+		
+	}
+	
+	//function to load new trial  	
+	var loadStuff = function(){
+		
+	
+		resp_area.addEventListener('mouseover', myMouse);
+		resp_area.removeEventListener('mouseover', myMouse);
+		//resp_area.addEventListener('touchmove', myTouch);
+		//resp_area.removeEventListener('touchmove', myTouch);
+		resp_area.addEventListener('touchstart', myTouch3);
+		resp_area.removeEventListener('touchstart', myTouch3);					
+		trialStarted = 1;		
+		sideResp = 0; // 1 left, 2 right
+		leftSR = 0; //left start region
+		init_trial_data();
+		
+
+		//Start region
+		ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#FF0000";
+		ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//Stimulus (image)
+		document.getElementById("ph").src = test.img_shown[trial];
+		//document.getElementById("ph").height = 50;
+		//document.getElementById("ph").width = 50;	
+		scaaling = 0.7	//determines how much the original image is reduced/increased
+		heeight = document.getElementById("ph").naturalHeight;
+		wiidth = document.getElementById("ph").naturalWidth;
+	  	prop = 0.5*rect.width - scaaling*wiidth*0.5
+	  	prop = prop/rect.width	  
+	  	xStim = prop*rect.width; //Coord. stimulus
+	  	yStim = 0.2*rect.height; 
+		loadCanvas(test.img_shown[trial], xStim, yStim, scaaling*wiidth, scaaling*heeight) //loads stimulus image
+		stimOn = 1;
+		
+		trial_data.start_time = Date.now();
+		//trial_data.fix_duration = 1000; //Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]);
+		
+		
+		
+	}
+	
+	//function to save stuff
+	function saveText(text, filename){
+	  var a = document.createElement('a');
+	  a.setAttribute('href', 'data:text/plain;charset=utf-u,'+encodeURIComponent(text));
+	  a.setAttribute('download', filename);
+	  a.click()
+	}
+	
+	
+	//function to load image in canvas
+	function loadCanvas(imgsrc, xstim, ystim, width, height) {
+	        var canvas = document.getElementById('canvas1');
+	        var context = canvas.getContext('2d');
+
+	        // load image from data url
+	        var imageObj = new Image();
+	        imageObj.onload = function() {
+	          context.drawImage(this, xstim, ystim, width, height)
+	        }
+
+	        imageObj.src = imgsrc;
+	 }
+	
+	 
+   	function openFullscreen() {
+		
+ 		
+		
+     	if (elem.requestFullscreen) {
+       	  	elem.requestFullscreen();
+    	} else if (elem.mozRequestFullScreen) { /* Firefox */
+       		elem.mozRequestFullScreen();
+     	} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+       	  	elem.webkitRequestFullscreen();
+     	} else if (elem.msRequestFullscreen) { /* IE/Edge */
+       	  	elem.msRequestFullscreen();
+     	}
+		
+ 		
+			
+   	}
+	
+   	function closeFullscreen() {
+ 		
+     	if (document.exitFullscreen) {
+       	  document.exitFullscreen();
+     	} else if (document.mozCancelFullScreen) {
+       	  document.mozCancelFullScreen();
+     	} else if (document.webkitExitFullscreen) {
+       	  document.webkitExitFullscreen();
+     	} else if (document.msExitFullscreen) {
+       	  document.msExitFullscreen();
+     	}
+		
+ 		
+		
+   	}
+  	
+	function getRandomInt(max) {
+	  return Math.floor(Math.random() * Math.floor(max));
+	  //e.g. console.log(getRandomInt(3)); //expected output: 0, 1 or 2
+	}
+	
+  </script>
+	
+</html>

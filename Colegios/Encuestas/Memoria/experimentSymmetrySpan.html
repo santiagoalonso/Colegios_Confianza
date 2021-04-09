@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Symmetry Span</title>
+  </head>
+  <style>
+  	body{height:100%; width:100%}
+	html{height:100%; width:100%}
+	.button1 {font-size: 5px;}
+  </style>
+  <body> 
+	  <button  id = 'sid' style = "z-index: 1" onclick="mySubjID();" class="button button1">SID</button> <!-- ask subj. id -->
+	  <p id = 'Xc'> X </p>
+	  <p id = 'Yc'> Y </p>
+	  
+  </body>
+  
+  <script>
+	 //THIS IS BASED ON MEMORY SPAN TASKS e.g. see article "The development of a short domain-general measure of working memory capacity"
+	  //For example: Participants were presented with a set of arithmetic operations and asked to judge whether each equation was true or false (approximately half were true). After 		each arithmetic operation, participants were presented with an element (a letter) for recall at the end of the set. Set sizes ranged from 3–7, with three administrations for each 		set size (i.e., 75 total operation-storage pairs).
+	
+	
+	 //<button  id = 'O' style = "z-index: 1" onclick="openFullscreen();" class="button button1">O</button> opens full screen -->
+	 //  <button  id = 'C' style = "z-index: 1" onclick="closeFullscreen();" class="button button1">C</button> closes full screen -->
+	 // <input type="file" id="fileItem" webkitdirectory mozdirectory /> // access to full folder
+	  //mysubjID + myTouch3 + mySubjCheck + document.addEventListener("webkitfullscreenchange"
+	  
+	  //file:///storage/emulated/0/NumExp/*.html EXAMPLE OF PATH FOR ANDROID 
+	  
+	  
+	  
+  	////////////// VARIABLES ///////////////
+	var timePH = Date.now()
+	var erased = []; //placeholder
+	var cell_to_Rec = []; //cells to recall
+	var cell_Rec = []; //cells recorded by participant
+	var click_counter = 0;
+	var text_re = "" 
+	var keywaspress = 0;
+	var trialStarted = 10;
+	var fixOn = 0;
+  	var stimOn = 0;
+	var stimOn2 = 1;
+  	var leftSR = 0; //index left start region
+  	var xM = 0; //mouse x coordinate
+  	var yM = 0; //mouse y coordinate
+  	var trial = 0; //operations seen
+	var trial_setsize = 0; //set size completed
+	var rest = 0; // rest screen is off (0), or moved from on to off (1)
+	var rest_temp = 0; // to avoid repainting the rest font
+	var feedback = 2500; // duration of feedback or element to recall in ms
+  	var DATA = [];
+  	var test = { //Test trials variables
+  		fix_dur: [250, 1500], //[max, min] of fix duration (ms)	
+		timestim: 1000, //time the image is on screen (ms)	
+		timere: 1500, //time the recall element is on screen (ms)
+		timepe: 800, //penalty time for a mistake (ms)
+		fbtime: 1000, //time that x out of set size message appears (ms)
+  		targets_dim: [100,100], //[height, width] pixels
+  		targets_relative_Hcoord: [.3, .7], //Horz. coord. [leftcoordT1, leftcoordT2 ] in % of the body-tag width;
+		targets_relative_Vcoord: [.7, .7], //Vert. coord. [leftcoordT1, leftcoordT2 ] in % of the body-tag height; 	 	
+  		start_dim: [100,100],  //[height, width] 
+  		size_start: [300,300], //[height, width] ... size where finger/mouse should start  
+  		size_fix: 60, //px
+  		samplingrate: 20, //sampling rate (in ms) e.g. 20 is one sample every 20 ms		
+		set_size_available: [2], // ['2','3','4','5','6'], //setsize
+		rep_conds: 1, //Number of times set size are repeated e.g. if 0 only once every condition; e.g. if 2, then exp_conditions will be looped 3 times (1 original and 2 additional repetitions)
+		nTrials: 0, //Number of recalls (updated below)
+		nTrials_total: 0, //Number of times the subject sees an operation (updated below)
+		trials_to_rest: 500, //Number of trials before resting screen
+		Trials_order: [], //index to randomize exp_cond_rep i.e. vector with images shown
+		cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 					
+		correct_side: [], //IMPORTANT: (0 left, 1 right)
+		img_shown: [], //IMPORTANT: filename i.e. image presented
+		
+		rows: 8, //must be even; rows and columns for the image (i.e. rows are equal to columns)
+		rowsRec: 4,  //rows and columns for the recall matrix (i.e. rows are equal to columns)
+		fontsize_op: 40, //font size of operations in px
+		fontsize_re: 80, //font size of element to recall
+		fontsize_in: 25, //font size of misc instruction
+								
+		keysAllow: ['a','A','l','L'], //keyboard key participants can press to report an answer
+		set_size: [], //number of operations before recalling of elements (per "trial")
+		rec: [] //0 no recall test, 1 participant was asked to recall elements in that trial
+  	}
+	
+	
+	var fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+	var trial_data = {
+			start_time: null, //Stimulus on
+			click_time: null, //target touched			
+			fix_duration: fd, //min, max (ms)
+			trial: trial,
+			trial_setsize: trial_setsize,
+			RT: null, //Response time
+			MT: null, //memory time			
+			keyPress: null, //subject keyboard response; see keysAllow e.g. A: false, L: true		
+			sideResp: null, //subjects  response 0 left, 1 right			
+			correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        stimulus: null,
+	  		xmouse: [],
+	  		ymouse: [],
+	  		timestamp_mouse: [],
+			xSR: xSR, //Start region coord.
+			ySR: ySR, 
+			xT1: xT1, //Target 1 coord.
+			yT1: yT1, 
+			xT2: xT2, //Target 2 coord.
+			yT2: yT2, 			
+			
+			sym: null, //1: symmetric image; 0: not symmetric
+			matrix: [], //image in the form of a matrix; if cell=1 then it was colored black, if 0 then white
+			matrixRec: [], //element to recall in the form of a matrix; if cell=1 then it was the cell to remember
+			cell_to_Rec: [], //elements to click/recall. Each item in the array is a pair [row,column]. Its length is equal to set_size
+			cell_Rec: [], //elements clicked/recalled
+			matrixIn: [], //elements recalled in the form of a matrix; if cell=1 then it was clicked as a remembered element
+			
+												
+			rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 	
+			correct_re: null, //1: correct recall of all elements; 0: incorrect recall (at least one element was not remembered or misplaced)
+			nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+			set_size: null, //number of operations before recalling of elements
+			
+			
+			toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+			cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+			subjID: 9999999999,
+			gender: 99, //0 male, 1 female
+			age: 0, //years
+			school: 0, //curso del estudiante
+			test: test      		
+	}
+	
+  	//var file = document.getElementById('fileItem'); // e.g. file.files[1]['name']
+	//removeElement('fileItem')
+	
+	//Randomization of set sizes presented 
+	let f = (a, b) => [].concat(...a.map(a => b.map(b => [].concat(a, b))));
+	let cartesian = (a, b, ...c) => b ? cartesian(f(a, b), ...c) : a; //Cartesian product
+	var exp_conditions =  test.set_size_available; // all experimental conditions 
+	var repeatelem = function(elem, n){
+	    // returns an array with element elem repeated n times.
+	    var arr = [];
+
+	    for (var i = 0; i <= n; i++) {
+	        arr = arr.concat(elem);
+	    };
+
+	    return arr;
+	};	
+	var exp_cond_rep = repeatelem(exp_conditions,test.rep_conds)
+	test.nTrials = exp_cond_rep.length
+	test.nTrials_total = (test.set_size_available.reduce(function(a, b) { return a + b; }, 0))*(test.rep_conds+1); //the first weird factor is the way to add a vector in javascript
+	var bucket = []; //bucket of integers to sample without replacement
+	for (var i=0; i<test.nTrials; i++) {
+	    bucket.push(i);
+	}	
+	for (var i=0; i<test.nTrials; i++) {
+	    test.Trials_order.push(getRandomFromBucket()) 
+	}
+	var cs = ['/L/', '/R/']
+	var patt1 = /[0-9]+/g //this regular expression finds numbers in the file name
+	for (var i = 0; i<test.nTrials; i++){ //This loops adds information to the variable test about each trial e.g. set_size,  ...
+		test.cond_shown.push(exp_cond_rep[test.Trials_order[i]])
+		temp = []			
+  	 	for (var j = 0; j<test.cond_shown[i]; j++){
+  	 		test.correct_side.push(Math.floor(Math.random() * 2)) //0 left i.e. incorrect result for operation, 1 right i.e. correct result for operation
+			test.set_size.push(test.cond_shown[i])						
+			if (j < test.cond_shown[i] - 1){
+				test.rec.push(0)
+			} else {
+				test.rec.push(1)				
+			}
+  	 	}
+				
+	}
+   
+   
+   
+    /////////////// PAGE/HTML SETUP	////////////// 
+  	//Area on-screen where x,y mouse coordinates are collected
+	
+  	var resp_area = document.querySelector("body")
+  	resp_area.setAttribute("id","myB");
+	resp_area.setAttribute("ontouchmove","myTouch2(e)");
+	resp_area.setAttribute("style","z-index=4"); 
+  	var myB = document.getElementById("myB");
+  	var rect = myB.getBoundingClientRect();
+	
+    //Table
+    //tableCreate(trial_data.sym, test.rows)
+	
+	
+  	//HTML element styles
+    var head = document.querySelector("head")
+    var newStyle = document.createElement("style");
+	
+	
+  	//Area on-screen of response targets 
+  	//You can add more targets to a container (more id target#) 
+  	//if you want more targets at different horizontal coordinates create more containers
+  	//IMPORTANT: if you add more targets update myClick function e.g. add resp_area.removeChild(document.querySelector("#target4"));
+  	var newCanvas = document.createElement("canvas");
+  	newCanvas.setAttribute("class","canvas");
+  	newCanvas.setAttribute("id","canvas1");
+  	newCanvas.setAttribute("width", rect.width);
+  	newCanvas.setAttribute("height", rect.height);
+	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+	//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+  	resp_area.appendChild(newCanvas);	
+	//resp_area.insertBefore(newCanvas, document.getElementById("O"));	
+	
+	
+  	var canvas = document.getElementById("canvas1");
+  	var ctx = canvas.getContext("2d");
+  	ctx.fillStyle = "#FF0000";
+	
+  	//Fixation
+  	var prop = .5*rect.width - test.size_fix*0.5
+  	prop = prop/rect.width	
+  	var xFix = prop*rect.width; //Coord. fix
+  	var yFix = 0.4*rect.height;
+  	//ctx.fillStyle = "#000000";
+  	//ctx.font = test.size_fix + "px Arial";
+  	//ctx.fillText("+",xFix,yFix); 
+	
+	
+  	//Target 1
+  	prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5
+  	var xT1 = prop;  //Coord. target 1
+	prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+  	var yT1 = prop;
+  	//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+	
+  	//Target 2
+  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5
+  	var xT2 = prop; //Coord. target 2
+	prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+  	var yT2 = prop;
+  	//ctx.fillRect(xT2,yT2,test.targets_dim[1],test.targets_dim[0]); 
+	
+	//False text
+  	var xF = xT1 + test.targets_dim[1]*0.4; //Coord. target 1
+  	var yF = yT1 + test.targets_dim[0]*0.6;
+	
+	//True text
+  	var xV = xT2 + test.targets_dim[1]*0.35; //Coord. target 2
+  	var yV = yT2 + test.targets_dim[0]*0.6;
+	
+	
+  	//Start region
+	var vert_offset_SR = 0.6
+  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+  	prop = prop/rect.width
+  	var xSR = prop*rect.width; //Coord. start region
+  	var ySR = vert_offset_SR*rect.height;
+  	//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+	
+  
+ 
+	
+  	
+  	var elem = document.documentElement;
+  	
+	
+	////////////////  FUNCTIONS ////////////// 
+	// /storage/emulated/0/Numexp/experimentRDMCanvas.html
+	
+  	//function to handle non-clickable events
+  	var myMouse = function(e){
+		xM = e.clientX; //x position of finger or mouse
+		yM = e.clientY; //y position of finger or mouse
+		mySubjCheck()
+				
+  	}
+		
+	
+  	var myTouch = function(e){
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()	
+  	}
+	
+	function myTouch2(e) {
+		e.preventDefault()
+		xM = e.touches[0].clientX; //x position of finger or mouse
+		yM = e.touches[0].clientY; //y position of finger or mouse
+		mySubjCheck()
+	}
+	
+  	var myTouch3 = function(e){
+		e.preventDefault()
+		resp_area.addEventListener("touchmove", myTouch);	
+  	}
+	
+	var myKeyPress = function(e){
+		if (stimOn2 == 0){ //no image on screen do this
+			trial_data.keyPress = e.key;
+			trial_data.click_time = Date.now();
+			keywaspress = 1
+		} else {
+			trial_data.keyPress = ''
+		}
+		
+
+	}
+	
+	function mySubjID() {
+	  	trial_data.subjID = prompt("Please enter the subject ID", "No_subjID");	  	
+	  	trial_data.age = prompt("Please enter the subject age", "No_age");
+	  	trial_data.school = prompt("Please enter the subject school year", "No_school");
+	  	trial_data.gender = prompt("Please enter the subject gender (0 male, 1 female)", "No_gender");
+	  	removeElement('sid')
+	  	removeElement('Xc')
+	  	removeElement('Yc') 
+ 		elem.webkitRequestFullscreen();
+		
+ 		
+	}
+	
+	
+	//Check full screen (FOR CHROME, Safari use: webkitfullscreenchange; For firefox use: mozfullscreenchange; for Microsoft explorers: msfullscreenchange)
+	document.addEventListener("webkitfullscreenchange", function() {
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5 	  	
+ 	  	xT1 = prop;  //Coord. target 1
+		prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT1 = prop;
+		
+ 	  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5 	  	
+ 	  	xT2 = prop; //Coord. target 2
+		prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT2 = prop;
+		
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height; 
+		
+		
+		
+		//Start region
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#000000";
+		//ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		//ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		//ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+ 		
+		//window.scrollTo(0, 0)	
+		//document.getElementById("myB").focus();
+	});
+	
+	function mySubjCheck() { //To wait for a subjID
+		if (trial_data.subjID == 9999999999){
+			xM = 0
+			yM = 0
+			document.getElementById('Xc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+			document.getElementById('Yc').innerHTML = 'Por favor presione el boton SID en la esquina superior izquierda'
+		} else {
+			//Comment out or in if online position of the mouse/finger should be displayed
+			//document.getElementById('Xc').innerHTML = 'xSR: ' + Math.round(xSR) + '  xT1: ' + xT1 + '  xT2: ' + xT2 + '  xM: ' + xM
+			//document.getElementById('Yc').innerHTML = 'ySR: ' + Math.round(ySR) + '  yT1: ' + yT1 + '  yT2: ' + yT2 + '  yM: ' + yM
+			//if (full_screen == 0 ){
+			//	removeElement('Xc')
+			//	removeElement('Yc') 
+				//}
+					 	
+		}	
+	}
+	
+	function removeElement(elementId) {
+	    // Removes an element from the document
+	    var element = document.getElementById(elementId);
+	    element.parentNode.removeChild(element);
+	}
+	
+	//Initialize listeners
+	resp_area.addEventListener('mousemove', myMouse);
+	resp_area.addEventListener("touchstart", myTouch3);
+	resp_area.addEventListener("keydown", myKeyPress);
+	
+	
+	//IMPORTANT function controlling exp. flow and to colllect mouse/finger coordinates and check target hit
+	var myI = setInterval(function(){
+		text_re = 'Indique las ' + trial_data.set_size + " posiciones en el orden que aparecieron"
+		
+		if (trial == test.nTrials_total){
+			endTask()
+		}
+		
+		if (trial%test.trials_to_rest == 0 & trial>0 & rest == 0){ //BREAK
+			if (rest_temp == 0){
+				rest_temp = 1
+				ctx.fillStyle = "#000000";
+				ctx.font = "20px Arial";
+				ctx.fillText("Descansa. Muevete al rectangulo verde cuando desees continuar", 0.35*xFix,yFix);	
+				ctx.fillStyle = "#228B22";
+				ctx.fillRect(xSR,ySR,test.start_dim[1],test.start_dim[0]); 
+			}
+			 
+			if (xM > xSR && xM < (xSR + test.start_dim[1]) && yM > ySR && yM < (ySR + test.start_dim[0])){ //finger is inside start region
+				rest = 1;
+				clearScreen();
+				//Start region
+				ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+				//target 1
+				ctx.fillStyle = "#FF0000";
+				ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+				//target 2
+				ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+			}
+		
+			
+		} else if (trial_data.subjID != 9999999999) {
+			//If inside start region do this:			
+			//TIMELINE
+			rest_temp = 0;			
+			if (fixOn == 0) {	
+				fixOn = 1;	
+				leftSR = 0;
+				myFixAppears = setTimeout(function(){ 
+					ctx.fillStyle = "#000000";
+					ctx.font = test.size_fix + "px Arial";
+					ctx.fillText("+",xFix,yFix); //Fixation						
+				}, 100)
+				
+				
+				fd = Math.max(test.fix_dur[0], Math.random()*test.fix_dur[1]); //fix duration
+				myFixGone = setTimeout(function(){ 
+					ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+					ctx.fillRect(0.43*rect.width, 0.3*rect.height, 200, 200); //cover up fixation 		
+				}, fd)
+							
+				myStimAppears = setTimeout(function(){	//The image appears	
+					stimOn2 = 1								
+					loadStuff();										
+				}, fd + 200) //fd + # where # is how much after fix dissapears the stimulus images appear
+				
+				myStimDisappears = setTimeout(function(){
+					stimOn2 = 0		
+					removeElement('myTable')				
+					clearScreen();
+					//Start region
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+					//target 1
+					//ctx.fillStyle = "#FF0000";
+					//ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+					//target 2
+					//ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 					
+				}, fd + 200 + test.timestim)
+				
+				myQueryAppears = setTimeout(function(){	
+											
+					ctx.fillStyle = "#000000";
+					 
+					
+					//target 1
+					//ctx.fillStyle = "#000000";
+					ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+					//False text
+				  	xF = xT1 + test.targets_dim[1]*0.4; //Coord. target 1
+				  	yF = yT1 + test.targets_dim[0]*0.6;					 
+					ctx.font = test.fontsize_op + "px Arial";
+					ctx.fillText('F', xF, yF);
+
+					//target 2
+					//ctx.fillStyle = "#000000";
+					ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+					//True text
+				  	xV = xT2 + test.targets_dim[1]*0.35; //Coord. target 2
+				  	yV = yT2 + test.targets_dim[0]*0.6;
+					ctx.font = test.fontsize_op + "px Arial";
+					ctx.fillText('V', xV, yV);
+					
+					trial_data.start_time = Date.now();				
+					stimOn = 1;			
+					 					
+				}, fd + 200 + test.timestim + 200)
+							
+			}
+		   //trialStarted = 1;		
+		}
+		
+		
+		
+		if (trialStarted == 1 && stimOn == 1 ) {
+			ts = Date.now()-trial_data.start_time;
+			//trial_data.xmouse.push(xM);
+		    //trial_data.ymouse.push(yM);
+			//trial_data.timestamp_mouse.push(ts);
+				
+			
+			
+			if ((xM  > xT1 && xM  < (xT1 + test.targets_dim[1]) && yM  > yT1 && yM  < (yT1 + test.targets_dim[0]) && trial_data.toosoon == 0) || (trial_data.keyPress == test.keysAllow[0] || trial_data.keyPress == test.keysAllow[1])){ //hit target 1 or key press 1
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);	
+				clearTimeout(myQueryAppears);
+				trial_data.cond_shown = test.cond_shown[trial_setsize]; 	 							
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 0;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.click_time - trial_data.start_time;  					
+				
+				//trial_data.toosoon = 0;
+				//DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA				
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;						
+				//leftSR = 0;
+				trial_data.keyPress = ""
+				
+				if (trial_data.correct_side != trial_data.sideResp){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myRecall = setTimeout(function(){	
+						clearScreen()	
+						ctx.fillStyle = "#000000";
+						if (trial_data.sideResp == 0) { //left
+							//target 1	turns black	
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT1, yT1); 
+						} else { //right
+							//target 2 turns black
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT2, yT2);
+						}
+						//trial_data.matrixRec = tableRec(test.rowsRec) //element to recall			 
+												
+					}, 5) 
+					
+					myRecallA = setTimeout(function(){
+						clearScreen()							
+						trial_data.matrixRec = tableRec(test.rowsRec) //element to recall			 												
+					}, test.timepe) 
+					
+					myRecallGoneA = setTimeout(function(){	
+						removeElement('myTableRec')				
+						clearScreen()																
+					}, 0.975*(test.timepe + test.timere))
+					
+					myRecallGone = setTimeout(function(){	
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now()						
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timepe + test.timere)
+					
+					
+				} else {
+					
+					myRecall = setTimeout(function(){
+						clearScreen()					
+						ctx.fillStyle = "#000000";
+						//ctx.font = "20px Arial";
+						ctx.font = test.fontsize_re + "px Arial";
+						trial_data.matrixRec = tableRec(test.rowsRec) //element to recall			 
+					}, 5)
+					
+					myRecallGoneA = setTimeout(function(){	
+						removeElement('myTableRec')					
+						clearScreen()																
+					}, 0.975*test.timere)
+					
+					myRecallGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now()
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timere)
+					
+					//clearScreen()
+					//feedback = 0
+					//fixOn = 0;
+					//init_trial_data();
+				}
+					
+				
+				//trial = trial + 1;			  				
+				//init_trial_data();
+							
+				//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+			
+				
+				
+			} else if ((xM  > xT2 && xM  < (xT2 + test.targets_dim[1]) && yM  > yT2 && yM  < (yT2 + test.targets_dim[0]) && trial_data.toosoon == 0) || (trial_data.keyPress == test.keysAllow[2] || trial_data.keyPress == test.keysAllow[3])) { //hit target 2 or key press 2
+				clearTimeout(myFixGone);
+				clearTimeout(myStimAppears);
+				clearTimeout(myFixAppears);
+				clearTimeout(myStimDisappears);
+				clearTimeout(myQueryAppears);
+				clearScreen()
+				trial_data.cond_shown = test.cond_shown[trial_setsize]; 								
+				trial_data.correct_side = test.correct_side[trial]; 				
+				trial_data.sideResp = 1;
+				trial_data.click_time = Date.now();
+				trial_data.RT = trial_data.click_time - trial_data.start_time;  					
+				
+				//trial_data.toosoon = 0;
+				//DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA				
+				rest = 0;
+				trialStarted = 0;
+				stimOn = 0;		
+				//leftSR = 0;	
+				trial_data.keyPress = ""
+				
+				if (trial_data.correct_side != trial_data.sideResp){ //error feedback
+					//feedback = 400 //ms; feeedback duration
+					myRecall = setTimeout(function(){	
+						clearScreen()	
+						ctx.fillStyle = "#000000";
+						if (trial_data.sideResp == 0) { //left
+							//target 1	turns black	
+							ctx.fillRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT1, yT1); 
+						} else { //right
+							//target 2 turns black
+							ctx.fillRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]);
+							ctx.font = test.fontsize_in + "px Arial";
+							ctx.fillText('Error', xT2, yT2);
+						}
+						//trial_data.matrixRec = tableRec(test.rowsRec) //element to recall
+												
+					}, 5) 
+					
+					myRecallA = setTimeout(function(){
+						clearScreen()							
+						trial_data.matrixRec = tableRec(test.rowsRec) //element to recall			 												
+					}, test.timepe) 
+				
+					myRecallGoneA = setTimeout(function(){	
+						removeElement('myTableRec')					
+						clearScreen()																
+					}, 0.975*(test.timepe + test.timere))
+					
+					myRecallGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now()
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timepe + test.timere)
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+					
+				} else {
+					myRecall = setTimeout(function(){	
+						clearScreen()				
+						trial_data.matrixRec = tableRec(test.rowsRec) //element to recall  			 
+					}, 5)
+					
+					myRecallGoneA = setTimeout(function(){					
+						removeElement('myTableRec')		
+						clearScreen()																
+					}, 0.975*test.timere)
+					
+					myRecallGone = setTimeout(function(){					
+						clearScreen()	
+						//feedback = 0
+						timePH = Date.now()
+						getRec()
+						//Start region
+						//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+						//init_trial_data();									
+					}, test.timere)
+					
+					//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+					//clearScreen()
+					//feedback = 0
+					//fixOn = 0;
+					//init_trial_data();
+				}
+				
+				//trial = trial + 1;		  				
+				//init_trial_data();
+			
+											
+		 	}
+	  	}
+	}, test.samplingrate)  
+	
+	//function to clear screen
+	var clearScreen = function (){
+		ctx.fillStyle = "#FFFFFF"; //Has to be same background color
+		ctx.fillRect(0, 0, rect.width, rect.height); 
+		
+	}
+	
+	//function to empty the global variable trial_data
+	var init_trial_data = function(){
+		if (trial > 0) {
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched			
+				fix_duration: fd, //min, max (ms)
+				trial: trial,
+				trial_setsize: trial_setsize,
+				RT: null, //Response time	
+				MT: null, //memory time		
+				keyPress: null, //subject keyboard response; see keysAllow e.g. A: false, L: true		
+				sideResp: null, //subjects  response 0 left, 1 right			
+				correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        	stimulus: null,
+	  			xmouse: [],
+	  			ymouse: [],
+	  			timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 			
+			
+				sym: null, //1: symmetric image; 0: not symmetric
+				matrix: [], //image in the form of a matrix; if cell=1 then it was colored black, if 0 then white
+				matrixRec: [], //element to recall in the form of a matrix; if cell=1 then it was the cell to remember
+				cell_to_Rec: [], //elements to click/recall. Each item in the array is a pair [row,column]. Its length is equal to set_size
+				cell_Rec: [], //elements clicked/recalled
+				matrixIn: [], //elements recalled in the form of a matrix; if cell=1 then it was clicked as a remembered element
+				
+													
+				rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 				
+				correct_re: null, //1: correct recall of all elements; 0: incorrect recall (at least one element was not remembered or misplaced)
+				nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+				set_size: null, //number of operations before recalling of elements
+			
+			
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school, 
+				//test: test       		
+			}
+		} else if (trial == 0){
+			trial_data = {
+				start_time: null, //Stimulus on
+				click_time: null, //target touched			
+				fix_duration: fd, //min, max (ms)
+				trial: trial,
+				trial_setsize: trial_setsize,
+				RT: null, //Response time	
+				MT: null, //memory time	
+				keyPress: null, //subject keyboard response; see keysAllow e.g. A: false, L: true		
+				sideResp: null, //subjects  response 0 left, 1 right			
+				correct_side: [], //IMPORTANT: side of correct response (0 left, 1 right)
+	        	stimulus: null,
+	  			xmouse: [],
+	  			ymouse: [],
+	  			timestamp_mouse: [],
+				xSR: xSR, //Start region coord.
+				ySR: ySR, 
+				xT1: xT1, //Target 1 coord.
+				yT1: yT1, 
+				xT2: xT2, //Target 2 coord.
+				yT2: yT2, 			
+			
+				sym: null, //1: symmetric image; 0: not symmetric
+				matrix: [], //image in the form of a matrix; if cell=1 then it was colored black, if 0 then white
+				matrixRec: [], //element to recall in the form of a matrix; if cell=1 then it was the cell to remember
+				cell_to_Rec: [], //elements to click/recall. Each item in the array is a pair [row,column]. Its length is equal to set_size
+				cell_Rec: [], //elements clicked/recalled
+				matrixIn: [], //elements recalled in the form of a matrix; if cell=1 then it was clicked as a remembered element
+									
+				
+				rec: null, //0 no recall test, 1 participant was asked to recall elements in that trial 				
+				correct_re: null, //1: correct recall of all elements; 0: incorrect recall (at least one element was not remembered or misplaced)
+				nCorrect: null, //number of elements correctly recalled in their order (out of the set size)
+				set_size: null, //number of operations before recalling of elements
+			
+				
+				toosoon: 0, //left start region too soon: 1 yes; 0 no i.e. 0 is a good trial
+				cond_shown: [], //IMPORTANT: condition shown each trial as described in exp_cond_rep i.e. this is exp_cond_rep randomized (see below) 	 								
+				subjID: trial_data.subjID,
+				gender: trial_data.gender, //0 male, 1 female
+				age: trial_data.age, //years
+				school: trial_data.school, 								
+				test: test    		
+			}
+		}
+		
+ 		rect = document.getElementById("myB").getBoundingClientRect();		
+ 		resp_area.removeChild(newCanvas)
+ 		newCanvas = document.createElement("canvas");
+ 		newCanvas.setAttribute("class","canvas");
+ 		newCanvas.setAttribute("id","canvas1");
+ 		newCanvas.setAttribute("width", rect.width);
+ 	  	newCanvas.setAttribute("height", rect.height);
+ 	  	newCanvas.setAttribute("style","position:fixed; top:0; left:0; z-index: -1");
+		//newCanvas.setAttribute("ontouchmove","myTouch2(e)");
+ 	  	resp_area.appendChild(newCanvas);
+		
+		
+ 	  	canvas = document.getElementById("canvas1");
+ 	  	ctx = canvas.getContext("2d");
+		
+		
+ 		prop = test.targets_relative_Hcoord[0]*rect.width - test.targets_dim[1]*0.5
+ 	  	xT1 = prop; //prop*rect.width; //Coord. target 1
+		prop = test.targets_relative_Vcoord[0]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT1 = prop;
+		
+ 	  	prop = test.targets_relative_Hcoord[1]*rect.width - test.targets_dim[1]*0.5
+ 	  	xT2 = prop; // prop*rect.width; //Coord. target 2
+		prop = test.targets_relative_Vcoord[1]*rect.height - test.targets_dim[0]*0.5
+ 	  	yT2 = prop;
+		
+ 	  	prop = 50*rect.width/100 - test.start_dim[1]*0.5
+ 	  	prop = prop/rect.width
+ 	  	xSR = prop*rect.width; //Coord. start region
+ 	  	ySR = vert_offset_SR*rect.height;	
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);
+		
+	  	//Fixation
+	  	prop = .5*rect.width - test.size_fix*0.5
+	  	prop = prop/rect.width	
+	  	xFix = prop*rect.width; //Coord. fix
+	  	yFix = 0.4*rect.height;
+		
+	}
+	
+	//function to load new trial  	
+	var loadStuff = function(){
+		
+	
+		resp_area.addEventListener('mouseover', myMouse);
+		resp_area.removeEventListener('mouseover', myMouse);
+		//resp_area.addEventListener('touchmove', myTouch);
+		//resp_area.removeEventListener('touchmove', myTouch);
+		resp_area.addEventListener('touchstart', myTouch3);
+		resp_area.removeEventListener('touchstart', myTouch3);					
+		trialStarted = 1;				
+		leftSR = 0; //left start region
+		init_trial_data();
+		
+
+		//Start region
+		//ctx.strokeRect(xSR,ySR,test.start_dim[1],test.start_dim[0]);  
+		
+		//target 1
+		ctx.fillStyle = "#000000";
+		//ctx.strokeRect(xT1, yT1, test.targets_dim[1],test.targets_dim[0]); 
+		
+
+		//target 2
+		//ctx.strokeRect(xT2, yT2, test.targets_dim[1],test.targets_dim[0]); 
+		
+		
+		//Stimulus 		
+		trial_data.sym = test.correct_side[trial] //getRandomInt(1)		
+		trial_data.matrix = tableCreate(trial_data.sym, test.rows)
+						
+		trial_data.set_size = test.set_size[trial]
+		trial_data.rec = test.rec[trial]
+		
+		
+		
+	}
+	
+	//function to save stuff
+	function saveText(text, filename){
+	  var a = document.createElement('a');
+	  a.setAttribute('href', 'data:text/plain;charset=utf-u,'+encodeURIComponent(text));
+	  a.setAttribute('download', filename);
+	  a.click()
+	}
+	
+	
+	 
+   	function openFullscreen() {
+		
+ 		
+		
+     	if (elem.requestFullscreen) {
+       	  	elem.requestFullscreen();
+    	} else if (elem.mozRequestFullScreen) { /* Firefox */
+       		elem.mozRequestFullScreen();
+     	} else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+       	  	elem.webkitRequestFullscreen();
+     	} else if (elem.msRequestFullscreen) { /* IE/Edge */
+       	  	elem.msRequestFullscreen();
+     	}
+		
+ 		
+			
+   	}
+	
+   	function closeFullscreen() {
+ 		
+     	if (document.exitFullscreen) {
+       	  document.exitFullscreen();
+     	} else if (document.mozCancelFullScreen) {
+       	  document.mozCancelFullScreen();
+     	} else if (document.webkitExitFullscreen) {
+       	  document.webkitExitFullscreen();
+     	} else if (document.msExitFullscreen) {
+       	  document.msExitFullscreen();
+     	}
+		
+ 		
+		
+   	}
+  	
+	function getRandomInt(max) {
+	  return Math.floor(Math.random() * Math.floor(max));
+	  //e.g. console.log(getRandomInt(3)); //expected output: 0, 1 or 2
+	}
+	
+	function getRandomFromBucket() {
+		//sample without replacement
+	   var randomIndex = Math.floor(Math.random()*bucket.length);
+	   return bucket.splice(randomIndex, 1)[0];
+	}
+	
+	// Function to generate an array w/ alphabet letters from charA to charZ e.g. from 'd' to 'k'
+	function genCharArray(charA, charZ) {
+	  var a = [], i = charA.charCodeAt(0), j = charZ.charCodeAt(0);
+	  for (; i <= j; ++i) {
+	    a.push(String.fromCharCode(i));
+	  }
+	  return a;
+	}
+	
+	function FB(rec, to_rec) { //feedback; returns how many elements were remembered correctly
+	    var FB = 0
+		for (i=0; i<=rec.length; ++i){
+			if (i < to_rec.length){
+				if (rec[i][0] == to_rec[i][0] && rec[i][1] == to_rec[i][1]){
+					FB = FB + 1
+				}
+			}
+		}
+	    return FB;
+	}
+	
+	//Collect recall and save data
+	function getRec(){
+		if (trial_data.rec == 0) {
+			DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA
+			fixOn = 0;
+			trial = trial + 1;								
+			init_trial_data();
+		} else {
+			trial_data.matrixIn = tableInput(test.rowsRec) //input matrix for subject to click recalled elements
+			
+			ctx.fillStyle = "#000000";
+			ctx.font = test.fontsize_in + "px Arial";
+			ctx.fillText(text_re, xFix,0.75*yFix);		
+			trial_data.cell_to_Rec = cell_to_Rec.slice()				
+			var myI2 = setInterval(function(){
+	
+				
+				if (trial_data.keyPress == 'Enter'){
+					trial_data.MT = Date.now() - timePH;
+					trial_data.cell_Rec = cell_Rec.slice()										
+					trial_data.nCorrect = FB(trial_data.cell_Rec, trial_data.cell_to_Rec)
+					clearScreen()										
+					ctx.fillStyle = "#000000";									
+					ctx.font = test.fontsize_in + "px Arial";		 																				
+					ctx.fillText('Recordaste ' + trial_data.nCorrect + " de " + trial_data.cell_to_Rec.length, xFix, 0.75*yFix);
+					
+					if (trial_data.nCorrect == trial_data.cell_to_Rec.length){
+						trial_data.correct_re = 1 										
+					} else {
+						trial_data.correct_re = 0
+					}
+					DATA.push(JSON.parse(JSON.stringify(trial_data))); //IMPORTANT: DATA	
+					cell_to_Rec = []
+					cell_Rec = []
+					removeElement('myTableIn')
+					click_counter = 0
+					trial_setsize = trial_setsize + 1
+					trial = trial + 1;						
+					clearInterval(myI2);
+					myWait = setTimeout(function(){																								
+						init_trial_data();
+						fixOn = 0;
+						//clearInterval(myI2);
+					}, test.fbtime)						
+				}
+				//if (temp.length > trial_data.set_size){
+				//	temp.splice(0,1) //erases first element 
+				//}																
+			},5)
+			
+		}
+	}
+	
+	
+	//Create table
+	function tableCreate(sym, rows){
+		//sym is 1 for a symmetric image; 0 not symmetric
+		//rows must be even
+		
+	    //var body = document.body,
+	    tbl  = document.createElement('table');
+	    //tbl.style.width  = '500px';
+	    //tbl.style.border = '0px solid black';		
+		//tbl.setAttribute("position","absolute")
+		tbl.setAttribute('id', "myTable") 
+		tbl.setAttribute("style","border-spacing: 1px; z-index=8; position: relative")
+			
+		
+		
+		//rows = 10
+		columns = rows
+		var matrix = [];
+		for(var i=0; i<rows; i++) { //matrix to indicate if a cell is colored or not
+		    matrix[i] = [];
+		    for(var j=0; j<columns; j++) {
+		        matrix[i][j] = 0;
+		    }
+		}
+		
+		
+		for (var i=0; i<rows; i++) { //fills the matrix
+			bucket = []; //bucket of integers to sample without replacement
+			for (var j=0; j<(columns/2); j++) {
+			    bucket.push(j);
+			}
+			bucketL = bucket.slice();
+			bucketR = bucket.slice();
+			
+			for (var j=0; j<1+getRandomInt(columns/2); j++){
+		 	   	var randomIndex = Math.floor(Math.random()*bucketL.length);
+				temp = bucketL.splice(randomIndex, 1)[0];
+				//left side of image				
+				matrix[i][temp] = 1 //cell is colored
+				if (sym == 1){ //if symmetric image do this
+					//rigth side of image
+					matrix[i][columns-1-temp] = 1 //cell is colored
+				} else {
+					randomIndex = Math.floor(Math.random()*bucketR.length);
+					temp = bucketR.splice(randomIndex, 1)[0];
+					matrix[i][columns-1-temp] = 1 //cell is colored
+				}			
+			}	
+		}
+		
+		
+		
+		
+		
+	    for(var i = 0; i < rows; i++){
+	        var tr = tbl.insertRow();
+	        for(var j = 0; j < columns; j++){
+				var td = tr.insertCell();
+	            td.appendChild(document.createTextNode(''));
+	            td.style.border = '0px solid black';
+				td.style.width = '20px';
+				td.style.height = '20px';
+				if (matrix[i][j] == 1){
+					td.style.backgroundColor = '#000000'; 
+		        }
+			}
+				
+	    }		
+	    resp_area.appendChild(tbl);	
+		dimtable = document.getElementById("myTable").getBoundingClientRect();
+		document.getElementById("myTable").style.left = 0.5*rect.width - 0.5*dimtable.width  + "px"
+		document.getElementById("myTable").style.top = 0.5*rect.height - 0.5*dimtable.height  + "px"
+		
+		return matrix
+	}
+	
+	//Create recall element
+	function tableRec(rows){
+	    //var body = document.body,
+	    tbl  = document.createElement('table');
+	    //tbl.style.width  = '500px';
+	    //tbl.style.border = '0px solid black';		
+		//tbl.setAttribute("position","absolute")
+		tbl.setAttribute('id', "myTableRec") 
+		tbl.setAttribute("style","border-spacing: 1px; z-index=8; position: relative")
+			
+		
+		
+		//rows = 10
+		columns = rows
+		var matrix = [];
+		for(var i=0; i<rows; i++) { //matrix to indicate if a cell is colored or not
+		    matrix[i] = [];
+		    for(var j=0; j<columns; j++) {
+		        matrix[i][j] = 0;
+		    }
+		}	
+		
+		temp = [getRandomInt(rows), getRandomInt(columns)]		 	
+		ok = 0
+		idx = cell_to_Rec.length - 1 // last element
+		while (ok == 0) { //To avoid repeated recall elements; Reason: technicality i.e.to be able to use it with mouse and tablets. TO CHANGE IN THE (NEAR) FUTURE
+			repeat = 0
+			for(var i = 0; i < cell_to_Rec.length; i++){
+				if (temp[0] == cell_to_Rec[i][0] && temp[1] == cell_to_Rec[i][1]) {
+					repeat = 1 
+				}
+			}
+			
+			if (repeat == 0 ){
+				cell_to_Rec.push(temp)
+				ok = 1
+			} else {
+				temp = [getRandomInt(rows), getRandomInt(columns)]	
+			}	
+		}
+						
+		matrix[cell_to_Rec[cell_to_Rec.length - 1][0]][cell_to_Rec[cell_to_Rec.length - 1][1]] = 1 //Position to remember
+		
+	    for(var i = 0; i < rows; i++){
+	        var tr = tbl.insertRow();
+	        for(var j = 0; j < columns; j++){
+				var td = tr.insertCell();
+	            td.appendChild(document.createTextNode(''));
+	            td.style.border = '1px solid black';
+				td.style.width = '20px';
+				td.style.height = '20px';
+				if (matrix[i][j] == 1){
+					td.style.backgroundColor = '#FF0000'; 
+		        }
+			}
+				
+	    }		
+	    resp_area.appendChild(tbl);	
+		dimtable = document.getElementById("myTableRec").getBoundingClientRect();
+		document.getElementById("myTableRec").style.left = 0.5*rect.width - 0.5*dimtable.width  + "px"
+		document.getElementById("myTableRec").style.top = 0.5*rect.height - 0.5*dimtable.height  + "px"
+		
+		return matrix
+	}
+	
+	
+	
+	//Matrix for subject to click on and remember the elements
+	function tableInput(rows){
+	    //var body = document.body,
+	    tbl  = document.createElement('table');
+	    //tbl.style.width  = '500px';
+	    //tbl.style.border = '0px solid black';		
+		//tbl.setAttribute("position","absolute")
+		tbl.setAttribute('id', "myTableIn") 
+		tbl.setAttribute("style","border-spacing: 1px; z-index=8; position: relative")
+			
+		
+		
+		//rows = 10
+		columns = rows
+		var matrix = [];
+		for(var i=0; i<rows; i++) { //matrix to indicate if a cell is colored or not
+		    matrix[i] = [];
+		    for(var j=0; j<columns; j++) {
+		        matrix[i][j] = 0;
+		    }
+		}				
+		//matrix[getRandomInt(rows)][getRandomInt(columns)] = 1 //Position to remember								
+		
+	    for(var i = 0; i < rows; i++){
+	        var tr = tbl.insertRow();
+	        for(var j = 0; j < columns; j++){
+				var td = tr.insertCell();
+				td.setAttribute('id', i.toString() + "_" + j.toString()) 
+				td.setAttribute('onclick', 'myTableClick(this)')
+	            td.appendChild(document.createTextNode(''));
+	            td.style.border = '1px solid black';
+				td.style.width = '20px';
+				td.style.height = '20px';				
+			}
+				
+	    }		
+	    resp_area.appendChild(tbl);	
+		dimtable = document.getElementById("myTableIn").getBoundingClientRect();
+		document.getElementById("myTableIn").style.left = 0.5*rect.width - 0.5*dimtable.width  + "px"
+		document.getElementById("myTableIn").style.top = 0.5*rect.height - 0.5*dimtable.height  + "px"
+		
+		return matrix
+	}
+	
+	//function to handle clicks in input table 
+	function myTableClick(x){
+		
+		rowclicked = x.id.split("_")[0]
+		columnclicked = x.id.split("_")[1] //x.cellIndex
+		buttonclicked = x.button
+		
+		
+		if (trial_data.matrixIn[rowclicked][columnclicked] == 1){//cell was already pressed 
+
+			trial_data.matrixIn[rowclicked][columnclicked] = 0
+			document.getElementById(rowclicked + "_" + columnclicked).style.backgroundColor = '#FFFFFF'
+			x.innerHTML = ""
+			for(var i = 0; i < cell_Rec.length; i++){
+				if (cell_Rec[i][0] == rowclicked && cell_Rec[i][1] == columnclicked) {
+					erased.push(i)
+				}
+			}
+	    
+			if (erased.length > 0){//to order erased by click order
+				erased.sort(function(a, b){return a - b});
+			}	
+			
+			
+			
+		} else {
+			trial_data.matrixIn[rowclicked][columnclicked] = 1
+			document.getElementById(rowclicked + "_" + columnclicked).style.backgroundColor = '#FF0000'
+			if (erased.length == 0){
+				cell_Rec.push([rowclicked, columnclicked, click_counter])				
+				click_counter = click_counter + 1;
+				x.innerHTML = click_counter
+			} else {
+				
+				cell_Rec[erased[0]][0] = rowclicked
+				cell_Rec[erased[0]][1] = columnclicked
+				x.innerHTML = cell_Rec[erased[0]][2] + 1
+				erased.splice(0,1)
+			}
+	 
+		}
+						
+	}
+	
+	
+	//End task
+	function endTask() {
+		clearInterval(myI);		
+		resp_area.removeEventListener('mousemove', myMouse);
+		//resp_area.removeEventListener('touchmove', myTouch);					
+		resp_area.removeEventListener('touchstart', myTouch3);	
+		resp_area.removeEventListener('onkeypress', myKeyPress);				
+		ctx.fillStyle = "#000000";
+		ctx.font = "20px Arial";
+		ctx.fillText("Thanks for your participation",xFix, 1.25*yFix); 
+		saveText(JSON.stringify(DATA), trial_data.subjID + "_SymSpan_data.json");
+	}
+	
+	
+	
+	
+  </script>
+	
+</html>
